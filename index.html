@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>ZenHoop — Hoopers CSEN 2026</title>
+
+  <!-- PWA & Mobile App Meta -->
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ZenHoop" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png" />
+
+  <!-- Three.js & OrbitControls -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    :root {
+      --bg-app: #0F172A;
+      --bg-panel: #1E293B;
+      --bg-panel-elevated: #283548;
+      --border-subtle: rgba(148, 163, 184, 0.22);
+      --text-primary: #F8FAFC;
+      --text-secondary: #94A3B8;
+      --accent: #38BDF8;
+      --ok: #10B981;
+      --ok-bg: rgba(16, 185, 129, 0.18);
+      --err: #EF4444;
+      --err-bg: rgba(239, 68, 68, 0.2);
+      --warn: #F59E0B;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg-app);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+
+    /* HEADER BAR */
+    .header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 46px;
+      padding: 0 10px;
+      background: linear-gradient(180deg, #1E293B 0%, #172033 100%);
+      border-bottom: 1px solid var(--border-subtle);
+      gap: 6px;
+      z-index: 30;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-status.valid {
+      background: var(--ok-bg);
+      color: #34D399;
+      border-color: rgba(52, 211, 153, 0.4);
+    }
+    .badge-status.invalid {
+      background: var(--err-bg);
+      color: #FCA5A5;
+      border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+    }
+
+    .btn-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+    }
+    .btn-icon:active { transform: scale(0.94); background: var(--bg-panel-elevated); }
+    .btn-icon:disabled { opacity: 0.32; pointer-events: none; }
+    .btn-icon svg { width: 16px; height: 16px; stroke-width: 2; }
+
+    /* SUB-HEADER CONTROLS */
+    .control-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #131C31;
+      border-bottom: 1px solid var(--border-subtle);
+      z-index: 25;
+      overflow-x: auto;
+    }
+    .control-bar::-webkit-scrollbar { display: none; }
+
+    .selectors-wrap {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ui-select {
+      height: 29px;
+      padding: 0 6px;
+      border-radius: 7px;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-panel);
+      color: var(--text-primary);
+      font-size: 11.5px;
+      font-weight: 600;
+      outline: none;
+      min-width: 0;
+    }
+
+    .pill-switch {
+      display: inline-flex;
+      background: #0B1120;
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+
+    .pill-opt {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .pill-opt.active {
+      background: var(--accent);
+      color: #0F172A;
+      box-shadow: 0 1px 4px rgba(56, 189, 248, 0.45);
+    }
+
+    /* CANVAS AREA */
+    .stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, #1E293B 0%, #0B1120 100%);
+    }
+
+    #canvas2dWrap, #canvas3dWrap {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #canvas3dWrap { display: none; }
+
+    #svgCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* FLOATING TOOLS */
+    .zoom-stack {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 20;
+    }
+
+    .fab-mini {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    }
+    .fab-mini:active { transform: scale(0.93); }
+
+    .cam-stack {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 20;
+    }
+
+    .cam-pill {
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: var(--text-primary);
+      font-size: 11.5px;
+      font-weight: 600;
+      padding: 6px 11px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-align: left;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .cam-pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(15, 23, 42, 0.98);
+    }
+
+    .sim-bar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: none;
+      gap: 6px;
+      z-index: 20;
+    }
+
+    /* INSPECTOR BAR */
+    .inspector-bar {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      right: 10px;
+      background: rgba(30, 41, 59, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.6);
+      border-radius: 12px;
+      padding: 8px 11px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      z-index: 22;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+    }
+    .inspector-bar.open { display: flex; }
+
+    .insp-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .insp-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .insp-coords {
+      font-size: 11px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .insp-btns {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .btn-chip {
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-subtle);
+      background: #0F172A;
+      color: var(--text-primary);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-chip.accent {
+      background: var(--accent);
+      color: #0F172A;
+      border-color: var(--accent);
+    }
+    .btn-chip.danger {
+      color: #FCA5A5;
+      border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    /* BOTTOM DOCK (5 OBSTACLES) */
+    .dock-bar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      padding: 7px 10px;
+      background: linear-gradient(180deg, #172033 0%, #1E293B 100%);
+      border-top: 1px solid var(--border-subtle);
+      z-index: 30;
+    }
+
+    .dock-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 2px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .dock-item:active {
+      transform: scale(0.94);
+      border-color: var(--accent);
+    }
+    .dock-ico {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dock-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .dock-sub {
+      font-size: 9.5px;
+      color: var(--text-secondary);
+      line-height: 1;
+    }
+
+    /* BOTTOM SHEET / MODAL */
+    .sheet-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.68);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 60;
+      backdrop-filter: blur(3px);
+    }
+    .sheet-mask.open { display: flex; }
+
+    .sheet-panel {
+      width: 100%;
+      max-width: 540px;
+      max-height: 78vh;
+      background: var(--bg-panel);
+      border-top: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 18px 18px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.65);
+    }
+
+    .sheet-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sheet-title {
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .sheet-tabs {
+      display: flex;
+      background: #131C31;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .sheet-tab {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .sheet-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .sheet-body {
+      padding: 12px 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-rule {
+      padding: 9px 11px;
+      border-radius: 9px;
+      background: #0F172A;
+      border-left: 4px solid var(--ok);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .card-rule.err { border-left-color: var(--err); }
+    .card-rule.warn { border-left-color: var(--warn); }
+
+    .card-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 11px;
+      background: #0F172A;
+      border: 1px solid var(--border-subtle);
+      border-radius: 9px;
+      font-size: 12px;
+    }
+
+    /* TOAST */
+    .toast-msg {
+      position: fixed;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid var(--accent);
+      color: var(--text-primary);
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+    }
+    .toast-msg.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <!-- HEADER -->
+  <header class="header-bar">
+    <button id="badgeStatus" class="badge-status valid" title="Verifica Regolamento CSEN 2026">
+      <span id="badgeText">✓ Conforme</span>
+    </button>
+
+    <div class="header-actions">
+      <button id="btnUndo" class="btn-icon" title="Annulla">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button id="btnRedo" class="btn-icon" title="Ripeti">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+      </button>
+      <button id="btnPresets" class="btn-icon" title="Percorsi Preset CSEN 2026">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/></svg>
+      </button>
+      <button id="btnPng" class="btn-icon" title="Esporta Planimetria PNG">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button id="btnJson" class="btn-icon" title="Salva / Carica Progetto JSON">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- CONTROL BAR -->
+  <div class="control-bar">
+    <div class="selectors-wrap">
+      <select id="selCat" class="ui-select" title="Categoria Altezza">
+        <option value="Small">Small (&lt;43cm)</option>
+        <option value="Standard" selected>Standard (≥43cm)</option>
+      </select>
+      <select id="selClass" class="ui-select" title="Classe CSEN 2026">
+        <option value="Experience">Experience</option>
+        <option value="Avviamento" selected>Avviamento</option>
+        <option value="Junior">Junior</option>
+        <option value="Senior">Senior</option>
+        <option value="Elite">Elite</option>
+      </select>
+      <select id="selField" class="ui-select" title="Dimensioni Campo">
+        <option value="20x40" selected>20×40m</option>
+        <option value="18x36">18×36m</option>
+        <option value="15x30">15×30m</option>
+      </select>
+    </div>
+
+    <div class="pill-switch">
+      <button id="opt2D" class="pill-opt active">2D</button>
+      <button id="opt3D" class="pill-opt">3D</button>
+    </div>
+
+    <div class="pill-switch">
+      <button id="optMove" class="pill-opt active">Sposta</button>
+      <button id="optSeq" class="pill-opt">1→N</button>
+    </div>
+  </div>
+
+  <!-- WORKSPACE STAGE -->
+  <main class="stage">
+    <!-- 2D VIEW -->
+    <div id="canvas2dWrap">
+      <svg id="svgCanvas" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="zoom-stack">
+        <button id="zIn" class="fab-mini" title="Zoom +">+</button>
+        <button id="zOut" class="fab-mini" title="Zoom −">−</button>
+        <button id="zFit" class="fab-mini" title="Centra Campo">⊡</button>
+      </div>
+    </div>
+
+    <!-- 3D VIEW -->
+    <div id="canvas3dWrap">
+      <div id="camStack" class="cam-stack">
+        <button class="cam-pill active" data-cam="iso">Vista Isometrica</button>
+        <button class="cam-pill" data-cam="top">Vista Dall'Alto</button>
+        <button class="cam-pill" data-cam="handler">Vista Conduttore (ZdC)</button>
+      </div>
+      <div id="simBar" class="sim-bar">
+        <button id="btnSimToggle" class="cam-pill" style="border-color:#38BDF8;color:#38BDF8;">▶ Simula Cane</button>
+      </div>
+    </div>
+
+    <!-- SELECTED OBSTACLE INSPECTOR -->
+    <div id="inspectorBar" class="inspector-bar">
+      <div class="insp-meta">
+        <div id="inspTitle" class="insp-title">Hoop</div>
+        <div id="inspCoords" class="insp-coords">X: 10.00m • Y: 10.00m • 0°</div>
+      </div>
+      <div class="insp-btns" id="inspBtns"></div>
+    </div>
+  </main>
+
+  <!-- BOTTOM DOCK -->
+  <footer class="dock-bar">
+    <button class="dock-item" data-add="hoop">
+      <span class="dock-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FACC15" stroke-width="2.4"><path d="M5 20V11a7 7 0 0 1 14 0v9"/><line x1="2.5" y1="20" x2="7.5" y2="20"/><line x1="16.5" y1="20" x2="21.5" y2="20"/></svg>
+      </span>
+      <span class="dock-lbl">Hoop</span>
+      <span class="dock-sub">0.90m</span>
+    </button>
+
+    <button class="dock-item" data-add="gate">
+      <span class="dock-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38BDF8" stroke-width="2.4"><line x1="4" y1="5" x2="4" y2="20"/><line x1="20" y1="5" x2="20" y2="20"/><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/></svg>
+      </span>
+      <span class="dock-lbl">Gate</span>
+      <span class="dock-sub">1.20m</span>
+    </button>
+
+    <button class="dock-item" data-add="barrel">
+      <span class="dock-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FB7185" stroke-width="2.4"><circle cx="12" cy="12" r="7"/><line x1="12" y1="5" x2="12" y2="12"/></svg>
+      </span>
+      <span class="dock-lbl">Barrel</span>
+      <span class="dock-sub">Ø 0.60m</span>
+    </button>
+
+    <button class="dock-item" data-add="tunnel">
+      <span class="dock-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C084FC" stroke-width="2.4"><rect x="4" y="6" width="16" height="12" rx="4"/><line x1="9" y1="6" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="18"/></svg>
+      </span>
+      <span class="dock-lbl">Tunnel</span>
+      <span class="dock-sub">1m / 3m</span>
+    </button>
+
+    <button class="dock-item" data-add="zdc">
+      <span class="dock-ico">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#34D399" stroke-width="2.4" stroke-dasharray="3 2"><circle cx="12" cy="12" r="8"/></svg>
+      </span>
+      <span class="dock-lbl">ZdC</span>
+      <span class="dock-sub">Ø 2.00m</span>
+    </button>
+  </footer>
+</div>
+
+<!-- BOTTOM SHEET DRAWER -->
+<div id="sheetMask" class="sheet-mask">
+  <div class="sheet-panel">
+    <div class="sheet-head">
+      <span id="sheetTitle" class="sheet-title">Validazione CSEN 2026</span>
+      <button id="btnCloseSheet" class="btn-icon" title="Chiudi">✕</button>
+    </div>
+    <div id="sheetTabs" class="sheet-tabs">
+      <button class="sheet-tab active" data-tab="rules">Regole CSEN 2026</button>
+      <button class="sheet-tab" data-tab="sequence">Sequenza &amp; Distanze</button>
+    </div>
+    <div id="sheetBody" class="sheet-body"></div>
+  </div>
+</div>
+
+<input type="file" id="fileJson" accept=".json,application/json" style="display:none" />
+<div id="toastMsg" class="toast-msg"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // ==================== CSEN 2026 RULESET ====================
+  const RULES_2026 = {
+    Experience: { minObs: 6, maxObs: 12, maxRadius: { Small: 10, Standard: 12 }, minDist: 3.0, maxDist: 7.0, allow3mTunnel: false },
+    Avviamento: { minObs: 8, maxObs: 14, maxRadius: { Small: 12, Standard: 14 }, minDist: 3.0, maxDist: 7.5, allow3mTunnel: false },
+    Junior:     { minObs: 10, maxObs: 16, maxRadius: { Small: 14, Standard: 16 }, minDist: 3.0, maxDist: 8.0, allow3mTunnel: true },
+    Senior:     { minObs: 12, maxObs: 20, maxRadius: { Small: 16, Standard: 18 }, minDist: 3.0, maxDist: 8.5, allow3mTunnel: true },
+    Elite:      { minObs: 15, maxObs: 24, maxRadius: { Small: 18, Standard: 20 }, minDist: 3.0, maxDist: 9.0, allow3mTunnel: true }
+  };
+
+  // ==================== STATE ====================
+  let state = {
+    category: 'Standard',
+    courseClass: 'Avviamento',
+    fieldW: 20,
+    fieldH: 40,
+    obstacles: [],
+    sequence: [], // [{ obsId, side: 1 | -1 }]
+    selectedId: null,
+    selectedSeqIdx: null,
+    mode: 'move', // 'move' | 'sequence'
+    view: '2d'    // '2d' | '3d'
+  };
+
+  let history = [];
+  let historyIdx = -1;
+  let panX = 0, panY = 0, scale = 18;
+  let liveAngleDeg = null;
+  let simRunning = false;
+  let simT = 0;
+
+  // ==================== DOM REFS ====================
+  const svg = document.getElementById('svgCanvas');
+  const canvas2dWrap = document.getElementById('canvas2dWrap');
+  const canvas3dWrap = document.getElementById('canvas3dWrap');
+  const camStack = document.getElementById('camStack');
+  const simBar = document.getElementById('simBar');
+  const btnSimToggle = document.getElementById('btnSimToggle');
+  const badgeStatus = document.getElementById('badgeStatus');
+  const badgeText = document.getElementById('badgeText');
+  const inspectorBar = document.getElementById('inspectorBar');
+  const inspTitle = document.getElementById('inspTitle');
+  const inspCoords = document.getElementById('inspCoords');
+  const inspBtns = document.getElementById('inspBtns');
+  const sheetMask = document.getElementById('sheetMask');
+  const sheetTitle = document.getElementById('sheetTitle');
+  const sheetTabs = document.getElementById('sheetTabs');
+  const sheetBody = document.getElementById('sheetBody');
+  const toastMsg = document.getElementById('toastMsg');
+
+  function toast(txt) {
+    toastMsg.textContent = txt;
+    toastMsg.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toastMsg.classList.remove('show'), 2100);
+  }
+
+  function uid() {
+    return 'o_' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function labelFor(obs) {
+    const map = { hoop: 'Hoop', gate: 'Gate', barrel: 'Barrel', tunnel: 'Tunnel', zdc: 'ZdC' };
+    return map[obs.type] || obs.type;
+  }
+
+  // ==================== STORAGE & HISTORY ====================
+  function persist() {
+    try {
+      localStorage.setItem('zenhoop_csen2026_v3', JSON.stringify({
+        category: state.category,
+        courseClass: state.courseClass,
+        fieldW: state.fieldW,
+        fieldH: state.fieldH,
+        obstacles: state.obstacles,
+        sequence: state.sequence
+      }));
+    } catch (e) {}
+  }
+
+  function pushHist() {
+    const snap = JSON.stringify({
+      category: state.category,
+      courseClass: state.courseClass,
+      fieldW: state.fieldW,
+      fieldH: state.fieldH,
+      obstacles: state.obstacles,
+      sequence: state.sequence
+    });
+    if (historyIdx >= 0 && history[historyIdx] === snap) return;
+    history = history.slice(0, historyIdx + 1);
+    history.push(snap);
+    if (history.length > 45) history.shift();
+    historyIdx = history.length - 1;
+    syncHistBtns();
+    persist();
+  }
+
+  function syncHistBtns() {
+    document.getElementById('btnUndo').disabled = historyIdx <= 0;
+    document.getElementById('btnRedo').disabled = historyIdx >= history.length - 1;
+  }
+
+  function restoreSnap(str) {
+    const d = JSON.parse(str);
+    state.category = d.category;
+    state.courseClass = d.courseClass;
+    state.fieldW = d.fieldW;
+    state.fieldH = d.fieldH;
+    state.obstacles = d.obstacles;
+    state.sequence = d.sequence;
+    state.selectedId = null;
+    state.selectedSeqIdx = null;
+    syncSelects();
+    renderAll();
+    persist();
+  }
+
+  function syncSelects() {
+    document.getElementById('selCat').value = state.category;
+    document.getElementById('selClass').value = state.courseClass;
+    document.getElementById('selField').value = `${state.fieldW}x${state.fieldH}`;
+  }
+
+  // ==================== PRESET COURSES ====================
+  const PRESETS = {
+    avviamento: {
+      name: 'Avviamento Base (8 passaggi)',
+      category: 'Standard',
+      courseClass: 'Avviamento',
+      fieldW: 20,
+      fieldH: 40,
+      obstacles: [
+        { id: 'z1', type: 'zdc', x: 10.0, y: 34.5, angle: 0, length: 2.0 },
+        { id: 'h1', type: 'hoop', x: 10.0, y: 30.0, angle: 0, length: 0.9 },
+        { id: 'h2', type: 'hoop', x: 10.0, y: 25.0, angle: 0, length: 0.9 },
+        { id: 'b1', type: 'barrel', x: 12.25, y: 20.5, angle: 0, length: 0.6 },
+        { id: 't1', type: 'tunnel', x: 8.5, y: 17.0, angle: -45, length: 1.0 },
+        { id: 'h3', type: 'hoop', x: 6.0, y: 21.5, angle: 165, length: 0.9 },
+        { id: 'g1', type: 'gate', x: 7.5, y: 26.5, angle: 30, length: 1.2 },
+        { id: 'h4', type: 'hoop', x: 10.0, y: 32.0, angle: 180, length: 0.9 }
+      ],
+      sequence: [
+        { obsId: 'h1', side: 1 },
+        { obsId: 'h2', side: 1 },
+        { obsId: 'b1', side: 1 },
+        { obsId: 't1', side: 1 },
+        { obsId: 'h3', side: 1 },
+        { obsId: 'g1', side: 1 },
+        { obsId: 'h4', side: 1 },
+        { obsId: 'h2', side: 1 }
+      ]
+    },
+    junior: {
+      name: 'Junior Flow (10 passaggi)',
+      category: 'Standard',
+      courseClass: 'Junior',
+      fieldW: 20,
+      fieldH: 40,
+      obstacles: [
+        { id: 'z1', type: 'zdc', x: 10.0, y: 35.0, angle: 0, length: 2.0 },
+        { id: 'h1', type: 'hoop', x: 10.0, y: 30.5, angle: 0, length: 0.9 },
+        { id: 'g1', type: 'gate', x: 12.5, y: 26.0, angle: -25, length: 1.2 },
+        { id: 'h2', type: 'hoop', x: 14.5, y: 21.0, angle: 0, length: 0.9 },
+        { id: 'b1', type: 'barrel', x: 12.0, y: 16.0, angle: 0, length: 0.6 },
+        { id: 't1', type: 'tunnel', x: 7.5, y: 15.5, angle: 90, length: 3.0 },
+        { id: 'h3', type: 'hoop', x: 4.5, y: 20.5, angle: 180, length: 0.9 },
+        { id: 'b2', type: 'barrel', x: 6.5, y: 25.5, angle: 0, length: 0.6 },
+        { id: 'h4', type: 'hoop', x: 8.5, y: 30.0, angle: 165, length: 0.9 }
+      ],
+      sequence: [
+        { obsId: 'h1', side: 1 },
+        { obsId: 'g1', side: 1 },
+        { obsId: 'h2', side: 1 },
+        { obsId: 'b1', side: -1 },
+        { obsId: 't1', side: 1 },
+        { obsId: 'h3', side: 1 },
+        { obsId: 'b2', side: 1 },
+        { obsId: 'h4', side: 1 },
+        { obsId: 'g1', side: -1 },
+        { obsId: 'h2', side: 1 }
+      ]
+    },
+    senior: {
+      name: 'Senior Tecnico (12 passaggi)',
+      category: 'Standard',
+      courseClass: 'Senior',
+      fieldW: 20,
+      fieldH: 40,
+      obstacles: [
+        { id: 'z1', type: 'zdc', x: 10.0, y: 35.5, angle: 0, length: 2.0 },
+        { id: 'h1', type: 'hoop', x: 10.0, y: 31.0, angle: 0, length: 0.9 },
+        { id: 'h2', type: 'hoop', x: 10.0, y: 26.0, angle: 0, length: 0.9 },
+        { id: 'b1', type: 'barrel', x: 13.0, y: 21.5, angle: 30, length: 0.6 },
+        { id: 'g1', type: 'gate', x: 15.0, y: 16.0, angle: 0, length: 1.2 },
+        { id: 'h3', type: 'hoop', x: 12.0, y: 11.5, angle: -90, length: 0.9 },
+        { id: 't1', type: 'tunnel', x: 7.0, y: 12.0, angle: 90, length: 3.0 },
+        { id: 'b2', type: 'barrel', x: 4.5, y: 17.5, angle: -20, length: 0.6 },
+        { id: 'g2', type: 'gate', x: 6.5, y: 23.0, angle: 25, length: 1.2 },
+        { id: 'h4', type: 'hoop', x: 8.0, y: 28.5, angle: 180, length: 0.9 }
+      ],
+      sequence: [
+        { obsId: 'h1', side: 1 },
+        { obsId: 'h2', side: 1 },
+        { obsId: 'b1', side: 1 },
+        { obsId: 'g1', side: -1 },
+        { obsId: 'h3', side: 1 },
+        { obsId: 't1', side: 1 },
+        { obsId: 'b2', side: -1 },
+        { obsId: 'g2', side: 1 },
+        { obsId: 'h4', side: 1 },
+        { obsId: 'h2', side: 1 },
+        { obsId: 'b1', side: -1 },
+        { obsId: 'h3', side: 1 }
+      ]
+    }
+  };
+
+  function loadPreset(key, silent = false) {
+    const p = PRESETS[key];
+    if (!p) return;
+    state.category = p.category;
+    state.courseClass = p.courseClass;
+    state.fieldW = p.fieldW;
+    state.fieldH = p.fieldH;
+    state.obstacles = JSON.parse(JSON.stringify(p.obstacles));
+    state.sequence = JSON.parse(JSON.stringify(p.sequence));
+    state.selectedId = null;
+    state.selectedSeqIdx = null;
+    syncSelects();
+    fitField();
+    pushHist();
+    renderAll();
+    if (!silent) toast(`Caricato: ${p.name}`);
+  }
+
+  // ==================== SHARED 2D / 3D DOG PATH GEOMETRY ====================
+  function getPassGeometry(obs, side = 1, prevPt = null) {
+    const rad = (obs.angle * Math.PI) / 180;
+    const fx = Math.sin(rad);
+    const fy = -Math.cos(rad);
+    const rx = Math.cos(rad);
+    const ry = Math.sin(rad);
+
+    if (obs.type === 'hoop') {
+      const half = 0.45;
+      let dir = 1;
+      if (prevPt) {
+        const vx = obs.x - prevPt.x;
+        const vy = obs.y - prevPt.y;
+        if (vx * fx + vy * fy < 0) dir = -1;
+      }
+      return {
+        entry: { x: obs.x - fx * dir * half, y: obs.y - fy * dir * half },
+        mid: { x: obs.x, y: obs.y },
+        exit: { x: obs.x + fx * dir * half, y: obs.y + fy * dir * half },
+        inDir: { x: fx * dir, y: fy * dir },
+        outDir: { x: fx * dir, y: fy * dir },
+        lead: 0.75
+      };
+    }
+
+    if (obs.type === 'tunnel') {
+      const half = (obs.length || 1.0) / 2;
+      let dir = 1;
+      if (prevPt) {
+        const vx = obs.x - prevPt.x;
+        const vy = obs.y - prevPt.y;
+        if (vx * fx + vy * fy < 0) dir = -1;
+      }
+      return {
+        entry: { x: obs.x - fx * dir * half, y: obs.y - fy * dir * half },
+        mid: { x: obs.x, y: obs.y },
+        exit: { x: obs.x + fx * dir * half, y: obs.y + fy * dir * half },
+        inDir: { x: fx * dir, y: fy * dir },
+        outDir: { x: fx * dir, y: fy * dir },
+        lead: 0.85
+      };
+    }
+
+    if (obs.type === 'gate') {
+      const halfBar = 0.55;
+      const offset = 0.45 * side;
+      const cx = obs.x + fx * offset;
+      const cy = obs.y + fy * offset;
+      let dir = 1;
+      if (prevPt) {
+        const vx = cx - prevPt.x;
+        const vy = cy - prevPt.y;
+        if (vx * rx + vy * ry < 0) dir = -1;
+      }
+      return {
+        entry: { x: cx - rx * dir * halfBar, y: cy - ry * dir * halfBar },
+        mid: { x: cx, y: cy },
+        exit: { x: cx + rx * dir * halfBar, y: cy + ry * dir * halfBar },
+        inDir: { x: rx * dir, y: ry * dir },
+        outDir: { x: rx * dir, y: ry * dir },
+        lead: 0.65
+      };
+    }
+
+    if (obs.type === 'barrel') {
+      const latOffset = 0.65 * side;
+      const halfSpan = 0.14;
+      const cx = obs.x + rx * latOffset;
+      const cy = obs.y + ry * latOffset;
+      let dir = 1;
+      if (prevPt) {
+        const vx = cx - prevPt.x;
+        const vy = cy - prevPt.y;
+        if (vx * fx + vy * fy < 0) dir = -1;
+      }
+      return {
+        entry: { x: cx - fx * dir * halfSpan, y: cy - fy * dir * halfSpan },
+        mid: { x: cx, y: cy },
+        exit: { x: cx + fx * dir * halfSpan, y: cy + fy * dir * halfSpan },
+        inDir: { x: fx * dir, y: fy * dir },
+        outDir: { x: fx * dir, y: fy * dir },
+        lead: 0.22
+      };
+    }
+
+    return {
+      entry: { x: obs.x, y: obs.y },
+      mid: { x: obs.x, y: obs.y },
+      exit: { x: obs.x, y: obs.y },
+      inDir: { x: 0, y: -1 },
+      outDir: { x: 0, y: -1 },
+      lead: 0.5
+    };
+  }
+
+  function computePathSegments() {
+    const valid = state.sequence
+      .map((item, idx) => ({ ...item, seqIdx: idx, obs: state.obstacles.find(o => o.id === item.obsId) }))
+      .filter(item => item.obs && item.obs.type !== 'zdc');
+
+    if (valid.length === 0) return [];
+
+    const rough = valid.map(item => ({ x: item.obs.x, y: item.obs.y }));
+    const passes = valid.map((item, i) => ({
+      ...item,
+      geom: getPassGeometry(item.obs, item.side || 1, i > 0 ? rough[i - 1] : null)
+    }));
+
+    const segs = [];
+    for (let i = 0; i < passes.length; i++) {
+      const cur = passes[i];
+      segs.push({
+        kind: 'through',
+        p0: cur.geom.entry,
+        p1: cur.geom.exit,
+        obs: cur.obs,
+        seqIdx: cur.seqIdx
+      });
+
+      if (i < passes.length - 1) {
+        const nxt = passes[i + 1];
+        const p0 = cur.geom.exit;
+        const p1 = nxt.geom.entry;
+        const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+        const h1 = Math.min(cur.geom.lead + dist * 0.25, dist * 0.45);
+        const h2 = Math.min(nxt.geom.lead + dist * 0.25, dist * 0.45);
+
+        const cp1 = { x: p0.x + cur.geom.outDir.x * h1, y: p0.y + cur.geom.outDir.y * h1 };
+        const cp2 = { x: p1.x - nxt.geom.inDir.x * h2, y: p1.y - nxt.geom.inDir.y * h2 };
+
+        segs.push({
+          kind: 'transition',
+          p0,
+          cp1,
+          cp2,
+          p1,
+          dist,
+          fromIdx: i + 1,
+          toIdx: i + 2
+        });
+      }
+    }
+    return segs;
+  }
+
+  // ==================== VALIDATION ====================
+  function validateCourse() {
+    const rule = RULES_2026[state.courseClass] || RULES_2026.Avviamento;
+    const maxR = rule.maxRadius[state.category] || 14;
+    const issues = [];
+
+    const zdcList = state.obstacles.filter(o => o.type === 'zdc');
+    if (zdcList.length === 0) {
+      issues.push({ level: 'err', text: 'Manca la Zona di Conduzione (ZdC Ø 2.00m).' });
+    } else if (zdcList.length > 1) {
+      issues.push({ level: 'warn', text: `Presenti ${zdcList.length} ZdC (standard: 1 ZdC principale).` });
+    }
+
+    state.obstacles.forEach(obs => {
+      if (obs.x < 1.0 || obs.x > state.fieldW - 1.0 || obs.y < 1.0 || obs.y > state.fieldH - 1.0) {
+        issues.push({ level: 'err', text: `${labelFor(obs)} entro 1.00m dal bordo campo.` });
+      }
+    });
+
+    if (!rule.allow3mTunnel) {
+      state.obstacles.forEach(obs => {
+        if (obs.type === 'tunnel' && (obs.length || 1) > 1.5) {
+          issues.push({ level: 'err', text: `In ${state.courseClass} è ammesso solo il Tunnel da 1.00m.` });
+        }
+      });
+    }
+
+    const seqCount = state.sequence.length;
+    if (seqCount < rule.minObs || seqCount > rule.maxObs) {
+      issues.push({ level: 'err', text: `Passaggi sequenza: ${seqCount} (richiesti ${rule.minObs}–${rule.maxObs} in ${state.courseClass}).` });
+    }
+
+    if (zdcList.length > 0) {
+      const zdc = zdcList[0];
+      state.obstacles.forEach(obs => {
+        if (obs.type === 'zdc') return;
+        const d = Math.hypot(obs.x - zdc.x, obs.y - zdc.y);
+        if (d > maxR) {
+          issues.push({ level: 'err', text: `${labelFor(obs)} a ${d.toFixed(2)}m dalla ZdC (max ${maxR.toFixed(1)}m).` });
+        }
+      });
+    }
+
+    const trans = computePathSegments().filter(s => s.kind === 'transition');
+    trans.forEach(s => {
+      if (s.dist < rule.minDist) {
+        issues.push({ level: 'err', text: `Distanza #${s.fromIdx}→#${s.toIdx}: ${s.dist.toFixed(2)}m (min ${rule.minDist.toFixed(1)}m).` });
+      } else if (s.dist > rule.maxDist) {
+        issues.push({ level: 'err', text: `Distanza #${s.fromIdx}→#${s.toIdx}: ${s.dist.toFixed(2)}m (max ${rule.maxDist.toFixed(1)}m).` });
+      }
+    });
+
+    const errCnt = issues.filter(i => i.level === 'err').length;
+    if (errCnt === 0) {
+      badgeStatus.className = 'badge-status valid';
+      badgeText.textContent = '✓ Conforme';
+    } else {
+      badgeStatus.className = 'badge-status invalid';
+      badgeText.textContent = `⚠ ${errCnt} ${errCnt === 1 ? 'Errore' : 'Errori'}`;
+    }
+    return issues;
+  }
+
+  // ==================== 2D SVG RENDER ====================
+  function fitField() {
+    const r = canvas2dWrap.getBoundingClientRect();
+    const pad = 26;
+    const sx = (r.width - pad * 2) / state.fieldW;
+    const sy = (r.height - pad * 2) / state.fieldH;
+    scale = Math.max(8, Math.min(sx, sy));
+    panX = (r.width - state.fieldW * scale) / 2;
+    panY = (r.height - state.fieldH * scale) / 2;
+  }
+
+  function toFieldCoords(cx, cy) {
+    const r = svg.getBoundingClientRect();
+    return {
+      x: (cx - r.left - panX) / scale,
+      y: (cy - r.top - panY) / scale
+    };
+  }
+
+  function snap025(v) {
+    return Math.round(v * 4) / 4;
+  }
+
+  function render2D() {
+    const rule = RULES_2026[state.courseClass] || RULES_2026.Avviamento;
+    const maxR = rule.maxRadius[state.category] || 14;
+    validateCourse();
+
+    let out = `<defs>
+      <pattern id="turfStripes" width="2" height="2" patternUnits="userSpaceOnUse">
+        <rect width="2" height="1" fill="#46A353"/>
+        <rect y="1" width="2" height="1" fill="#3C9148"/>
+      </pattern>
+      <marker id="pathArrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M 0 1.5 L 9 5 L 0 8.5 z" fill="#FFFFFF"/>
+      </marker>
+      <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="0.1" stdDeviation="0.09" flood-color="#000" flood-opacity="0.45"/>
+      </filter>
+    </defs>`;
+
+    out += `<g transform="translate(${panX.toFixed(2)}, ${panY.toFixed(2)}) scale(${scale.toFixed(4)})">`;
+
+    // Bright green mowed grass turf
+    out += `<rect x="0" y="0" width="${state.fieldW}" height="${state.fieldH}" fill="url(#turfStripes)" stroke="#FFFFFF" stroke-width="0.16"/>`;
+
+    // 1m & 5m grid lines
+    for (let x = 1; x < state.fieldW; x++) {
+      const maj = x % 5 === 0;
+      out += `<line x1="${x}" y1="0" x2="${x}" y2="${state.fieldH}" stroke="${maj ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.16)'}" stroke-width="${maj ? 0.055 : 0.025}"/>`;
+    }
+    for (let y = 1; y < state.fieldH; y++) {
+      const maj = y % 5 === 0;
+      out += `<line x1="0" y1="${y}" x2="${state.fieldW}" y2="${y}" stroke="${maj ? 'rgba(255,255,255,0.42)' : 'rgba(255,255,255,0.16)'}" stroke-width="${maj ? 0.055 : 0.025}"/>`;
+    }
+
+    // 1.0m Safety perimeter zone
+    out += `<rect x="1" y="1" width="${state.fieldW - 2}" height="${state.fieldH - 2}" fill="none" stroke="rgba(254, 240, 138, 0.75)" stroke-width="0.065" stroke-dasharray="0.35 0.25"/>`;
+
+    // ZdC max working radius
+    const zdc = state.obstacles.find(o => o.type === 'zdc');
+    if (zdc) {
+      out += `<circle cx="${zdc.x}" cy="${zdc.y}" r="${maxR}" fill="rgba(255, 255, 255, 0.08)" stroke="rgba(255, 255, 255, 0.65)" stroke-width="0.075" stroke-dasharray="0.45 0.3"/>`;
+    }
+
+    // Dog trajectory & distance badges
+    const segs = computePathSegments();
+    segs.forEach(s => {
+      if (s.kind === 'through') {
+        out += `<line x1="${s.p0.x}" y1="${s.p0.y}" x2="${s.p1.x}" y2="${s.p1.y}" stroke="#FFFFFF" stroke-width="0.16" stroke-linecap="round"/>`;
+      } else {
+        const dPath = `M ${s.p0.x} ${s.p0.y} C ${s.cp1.x} ${s.cp1.y}, ${s.cp2.x} ${s.cp2.y}, ${s.p1.x} ${s.p1.y}`;
+        out += `<path d="${dPath}" fill="none" stroke="#FFFFFF" stroke-width="0.12" stroke-dasharray="0.28 0.16" marker-end="url(#pathArrow)"/>`;
+
+        const mx = 0.125 * s.p0.x + 0.375 * s.cp1.x + 0.375 * s.cp2.x + 0.125 * s.p1.x;
+        const my = 0.125 * s.p0.y + 0.375 * s.cp1.y + 0.375 * s.cp2.y + 0.125 * s.p1.y;
+        const outOfRange = s.dist < rule.minDist || s.dist > rule.maxDist;
+        const bg = outOfRange ? '#DC2626' : '#0F172A';
+        const fg = outOfRange ? '#FFFFFF' : '#38BDF8';
+        out += `<g transform="translate(${mx}, ${my})">
+          <rect x="-0.85" y="-0.32" width="1.7" height="0.64" rx="0.22" fill="${bg}" stroke="${outOfRange ? '#FCA5A5' : '#FFFFFF'}" stroke-width="0.045"/>
+          <text x="0" y="0.14" text-anchor="middle" fill="${fg}" font-size="0.41" font-weight="800">${s.dist.toFixed(1)}m</text>
+        </g>`;
+      }
+    });
+
+    // Obstacles
+    state.obstacles.forEach(obs => {
+      const sel = obs.id === state.selectedId;
+      out += `<g class="obs-item" data-id="${obs.id}" transform="translate(${obs.x}, ${obs.y}) rotate(${obs.angle})" filter="url(#dropShadow)">`;
+      out += `<circle cx="0" cy="0" r="1.15" fill="transparent" cursor="grab"/>`;
+
+      if (obs.type === 'hoop') {
+        out += `<rect x="-0.45" y="-0.08" width="0.90" height="0.16" rx="0.05" fill="#FACC15" stroke="#0F172A" stroke-width="0.045"/>`;
+        out += `<rect x="-0.54" y="-0.25" width="0.14" height="0.50" rx="0.03" fill="#FFFFFF" stroke="#0F172A" stroke-width="0.035"/>`;
+        out += `<rect x="0.40" y="-0.25" width="0.14" height="0.50" rx="0.03" fill="#FFFFFF" stroke="#0F172A" stroke-width="0.035"/>`;
+        out += `<polygon points="0,-0.38 -0.15,-0.16 0.15,-0.16" fill="#FACC15" stroke="#0F172A" stroke-width="0.03"/>`;
+      } else if (obs.type === 'gate') {
+        out += `<rect x="-0.60" y="-0.08" width="1.20" height="0.16" rx="0.04" fill="#38BDF8" stroke="#0F172A" stroke-width="0.045"/>`;
+        out += `<rect x="-0.67" y="-0.23" width="0.14" height="0.46" rx="0.03" fill="#FFFFFF" stroke="#0F172A" stroke-width="0.035"/>`;
+        out += `<rect x="0.53" y="-0.23" width="0.14" height="0.46" rx="0.03" fill="#FFFFFF" stroke="#0F172A" stroke-width="0.035"/>`;
+        out += `<text x="0" y="-0.24" text-anchor="middle" fill="#FFFFFF" font-size="0.36" font-weight="900">A</text>`;
+        out += `<text x="0" y="0.49" text-anchor="middle" fill="#E2E8F0" font-size="0.36" font-weight="900">B</text>`;
+      } else if (obs.type === 'barrel') {
+        out += `<circle cx="0" cy="0" r="0.30" fill="#F43F5E" stroke="#FFFFFF" stroke-width="0.055"/>`;
+        out += `<circle cx="0" cy="0" r="0.18" fill="none" stroke="rgba(15,23,42,0.45)" stroke-width="0.03"/>`;
+        out += `<line x1="0" y1="0" x2="0" y2="-0.30" stroke="#0F172A" stroke-width="0.075" stroke-linecap="round"/>`;
+      } else if (obs.type === 'tunnel') {
+        const len = obs.length || 1.0;
+        const half = len / 2;
+        out += `<rect x="-0.40" y="${-half}" width="0.80" height="${len}" rx="0.16" fill="#A855F7" fill-opacity="0.72" stroke="#FFFFFF" stroke-width="0.07"/>`;
+        for (let r = -half + 0.35; r < half - 0.1; r += 0.45) {
+          out += `<line x1="-0.40" y1="${r}" x2="0.40" y2="${r}" stroke="#FFFFFF" stroke-width="0.045" opacity="0.8"/>`;
+        }
+        out += `<polygon points="0,${-half - 0.26} -0.15,${-half - 0.05} 0.15,${-half - 0.05}" fill="#FFFFFF"/>`;
+      } else if (obs.type === 'zdc') {
+        out += `<circle cx="0" cy="0" r="1.0" fill="rgba(16,185,129,0.32)" stroke="#FFFFFF" stroke-width="0.085" stroke-dasharray="0.25 0.18"/>`;
+        out += `<text x="0" y="0.15" text-anchor="middle" fill="#FFFFFF" font-size="0.46" font-weight="900">ZdC</text>`;
+      }
+
+      if (sel) {
+        out += `<circle cx="0" cy="0" r="1.18" fill="none" stroke="#FFFFFF" stroke-width="0.07" stroke-dasharray="0.2 0.15"/>`;
+        if (obs.type !== 'zdc') {
+          out += `<line x1="0" y1="-1.18" x2="0" y2="-1.88" stroke="#FFFFFF" stroke-width="0.065"/>`;
+          out += `<circle class="rot-knob" data-id="${obs.id}" cx="0" cy="-1.88" r="0.35" fill="#38BDF8" stroke="#0F172A" stroke-width="0.065" cursor="crosshair"/>`;
+          if (liveAngleDeg !== null) {
+            out += `<g transform="translate(0, -2.58) rotate(${-obs.angle})">
+              <rect x="-0.75" y="-0.3" width="1.5" height="0.56" rx="0.2" fill="#0F172A" stroke="#38BDF8" stroke-width="0.04"/>
+              <text x="0" y="0.1" text-anchor="middle" fill="#FACC15" font-size="0.38" font-weight="800">${obs.angle}°</text>
+            </g>`;
+          }
+        }
+      }
+
+      out += `</g>`;
+
+      // Sequence number badges
+      const entries = state.sequence
+        .map((s, idx) => ({ ...s, num: idx + 1, seqIdx: idx }))
+        .filter(s => s.obsId === obs.id);
+
+      entries.forEach((entry, k) => {
+        const bx = obs.x + 0.65 + k * 0.68;
+        const by = obs.y - 0.65;
+        const active = state.selectedSeqIdx === entry.seqIdx;
+        out += `<g class="seq-pill" data-seqidx="${entry.seqIdx}" transform="translate(${bx}, ${by})" cursor="pointer">
+          <circle cx="0" cy="0" r="0.36" fill="${active ? '#FACC15' : '#0F172A'}" stroke="${active ? '#0F172A' : '#FFFFFF'}" stroke-width="0.06"/>
+          <text x="0" y="0.13" text-anchor="middle" fill="${active ? '#0F172A' : '#FFFFFF'}" font-size="0.38" font-weight="900">${entry.num}</text>
+        </g>`;
+      });
+    });
+
+    out += `</g>`;
+    svg.innerHTML = out;
+  }
+
+  // ==================== INSPECTOR BAR ====================
+  function renderInspector() {
+    const obs = state.obstacles.find(o => o.id === state.selectedId);
+    if (!obs) {
+      inspectorBar.classList.remove('open');
+      return;
+    }
+    inspectorBar.classList.add('open');
+    const dim = obs.type === 'tunnel' ? `${obs.length || 1}m`
+      : obs.type === 'gate' ? '1.20m'
+      : obs.type === 'barrel' ? 'Ø 0.60m'
+      : obs.type === 'hoop' ? '0.90m' : 'Ø 2.00m';
+    inspTitle.textContent = `${labelFor(obs)} (${dim})`;
+    inspCoords.textContent = `X: ${obs.x.toFixed(2)}m • Y: ${obs.y.toFixed(2)}m • ${obs.angle}°`;
+
+    let html = '';
+    const seqHits = state.sequence
+      .map((s, idx) => ({ ...s, idx }))
+      .filter(s => s.obsId === obs.id);
+
+    if ((obs.type === 'gate' || obs.type === 'barrel') && seqHits.length > 0) {
+      const targetIdx = (state.selectedSeqIdx !== null && state.sequence[state.selectedSeqIdx]?.obsId === obs.id)
+        ? state.selectedSeqIdx
+        : seqHits[0].idx;
+      const side = state.sequence[targetIdx].side || 1;
+      const lbl = obs.type === 'gate'
+        ? (side === 1 ? '⇄ Lato A' : '⇄ Lato B')
+        : (side === 1 ? '⇄ Destra' : '⇄ Sinistra');
+      html += `<button class="btn-chip accent" data-act="flip" data-seqidx="${targetIdx}">${lbl}</button>`;
+    }
+
+    if (obs.type === 'tunnel') {
+      const nxt = (obs.length || 1) === 1 ? '3.0m' : '1.0m';
+      html += `<button class="btn-chip accent" data-act="tunLen">⇄ ${nxt}</button>`;
+    }
+
+    if (obs.type !== 'zdc') {
+      html += `<button class="btn-chip" data-act="rot15">+15°</button>`;
+    }
+
+    html += `<button class="btn-chip danger" data-act="del">Elimina</button>`;
+    inspBtns.innerHTML = html;
+  }
+
+  inspBtns.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const act = b.dataset.act;
+    const obs = state.obstacles.find(o => o.id === state.selectedId);
+    if (!obs) return;
+
+    if (act === 'flip') {
+      const idx = parseInt(b.dataset.seqidx, 10);
+      if (state.sequence[idx]) {
+        state.sequence[idx].side = (state.sequence[idx].side || 1) * -1;
+        pushHist();
+        renderAll();
+      }
+    } else if (act === 'tunLen') {
+      obs.length = (obs.length || 1) === 1 ? 3.0 : 1.0;
+      pushHist();
+      renderAll();
+    } else if (act === 'rot15') {
+      obs.angle = (obs.angle + 15) % 360;
+      pushHist();
+      renderAll();
+    } else if (act === 'del') {
+      state.obstacles = state.obstacles.filter(o => o.id !== obs.id);
+      state.sequence = state.sequence.filter(s => s.obsId !== obs.id);
+      state.selectedId = null;
+      state.selectedSeqIdx = null;
+      pushHist();
+      renderAll();
+    }
+  });
+
+  // ==================== 2D TOUCH & POINTER GESTURES ====================
+  let pointers = new Map();
+  let drag = null;
+  let pinchDist = null;
+  let pinchMid = null;
+
+  svg.addEventListener('pointerdown', (e) => {
+    svg.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      pinchDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      pinchMid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+      drag = null;
+      return;
+    }
+
+    const seqPill = e.target.closest('.seq-pill');
+    if (seqPill) {
+      const idx = parseInt(seqPill.dataset.seqidx, 10);
+      state.selectedSeqIdx = idx;
+      state.selectedId = state.sequence[idx]?.obsId || null;
+      renderAll();
+      return;
+    }
+
+    const knob = e.target.closest('.rot-knob');
+    if (knob) {
+      drag = { type: 'rotate', obsId: knob.dataset.id, moved: false };
+      liveAngleDeg = 0;
+      return;
+    }
+
+    const item = e.target.closest('.obs-item');
+    if (item) {
+      const obs = state.obstacles.find(o => o.id === item.dataset.id);
+      if (!obs) return;
+
+      if (state.mode === 'sequence') {
+        if (obs.type === 'zdc') {
+          toast('La ZdC non è un ostacolo di sequenza');
+          return;
+        }
+        state.sequence.push({ obsId: obs.id, side: 1 });
+        state.selectedId = obs.id;
+        state.selectedSeqIdx = state.sequence.length - 1;
+        pushHist();
+        renderAll();
+        toast(`Step #${state.sequence.length}: ${labelFor(obs)}`);
+        return;
+      }
+
+      state.selectedId = obs.id;
+      const pt = toFieldCoords(e.clientX, e.clientY);
+      drag = {
+        type: 'move',
+        obsId: obs.id,
+        dx: pt.x - obs.x,
+        dy: pt.y - obs.y,
+        moved: false
+      };
+      renderAll();
+      return;
+    }
+
+    state.selectedId = null;
+    state.selectedSeqIdx = null;
+    drag = { type: 'pan', sx: e.clientX, sy: e.clientY, px: panX, py: panY };
+    renderAll();
+  });
+
+  svg.addEventListener('pointermove', (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const mid = { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+
+      if (pinchDist && pinchMid) {
+        const r = svg.getBoundingClientRect();
+        const factor = dist / pinchDist;
+        const nScale = Math.max(7, Math.min(65, scale * factor));
+        const cx = mid.x - r.left;
+        const cy = mid.y - r.top;
+
+        panX = cx - ((cx - panX) / scale) * nScale + (mid.x - pinchMid.x);
+        panY = cy - ((cy - panY) / scale) * nScale + (mid.y - pinchMid.y);
+        scale = nScale;
+        render2D();
+      }
+      pinchDist = dist;
+      pinchMid = mid;
+      return;
+    }
+
+    if (!drag) return;
+
+    if (drag.type === 'pan') {
+      panX = drag.px + (e.clientX - drag.sx);
+      panY = drag.py + (e.clientY - drag.sy);
+      render2D();
+    } else if (drag.type === 'move') {
+      const obs = state.obstacles.find(o => o.id === drag.obsId);
+      if (!obs) return;
+      const pt = toFieldCoords(e.clientX, e.clientY);
+      const nx = Math.max(0.5, Math.min(state.fieldW - 0.5, snap025(pt.x - drag.dx)));
+      const ny = Math.max(0.5, Math.min(state.fieldH - 0.5, snap025(pt.y - drag.dy)));
+      if (nx !== obs.x || ny !== obs.y) {
+        obs.x = nx;
+        obs.y = ny;
+        drag.moved = true;
+        render2D();
+        renderInspector();
+      }
+    } else if (drag.type === 'rotate') {
+      const obs = state.obstacles.find(o => o.id === drag.obsId);
+      if (!obs) return;
+      const pt = toFieldCoords(e.clientX, e.clientY);
+      const deg = (Math.atan2(pt.x - obs.x, -(pt.y - obs.y)) * 180) / Math.PI;
+      const snapped = ((Math.round(deg / 15) * 15) + 360) % 360;
+      liveAngleDeg = snapped;
+      if (snapped !== obs.angle) {
+        obs.angle = snapped;
+        drag.moved = true;
+      }
+      render2D();
+      renderInspector();
+    }
+  });
+
+  function onPointerRelease(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) {
+      pinchDist = null;
+      pinchMid = null;
+    }
+    if (liveAngleDeg !== null) {
+      liveAngleDeg = null;
+      render2D();
+    }
+    if (drag && (drag.type === 'move' || drag.type === 'rotate') && drag.moved) {
+      pushHist();
+      if (state.view === '3d') build3D();
+    }
+    drag = null;
+  }
+
+  svg.addEventListener('pointerup', onPointerRelease);
+  svg.addEventListener('pointercancel', onPointerRelease);
+
+  svg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const r = svg.getBoundingClientRect();
+    const cx = e.clientX - r.left;
+    const cy = e.clientY - r.top;
+    const factor = e.deltaY < 0 ? 1.12 : 0.89;
+    const nScale = Math.max(7, Math.min(65, scale * factor));
+    panX = cx - ((cx - panX) / scale) * nScale;
+    panY = cy - ((cy - panY) / scale) * nScale;
+    scale = nScale;
+    render2D();
+  }, { passive: false });
+
+  document.getElementById('zIn').addEventListener('click', () => {
+    const r = svg.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    const nScale = Math.min(65, scale * 1.25);
+    panX = cx - ((cx - panX) / scale) * nScale;
+    panY = cy - ((cy - panY) / scale) * nScale;
+    scale = nScale;
+    render2D();
+  });
+
+  document.getElementById('zOut').addEventListener('click', () => {
+    const r = svg.getBoundingClientRect();
+    const cx = r.width / 2, cy = r.height / 2;
+    const nScale = Math.max(7, scale * 0.8);
+    panX = cx - ((cx - panX) / scale) * nScale;
+    panY = cy - ((cy - panY) / scale) * nScale;
+    scale = nScale;
+    render2D();
+  });
+
+  document.getElementById('zFit').addEventListener('click', () => {
+    fitField();
+    render2D();
+  });
+
+  // ==================== 3D THREE.JS SCENE WITH BORDER COLLIE & HANDLER ====================
+  let scene, camera, renderer, controls, worldGroup;
+  let dogMesh = null, dogCurve = null;
+  let camMode = 'iso';
+
+  function createBorderCollieMesh() {
+    const dog = new THREE.Group();
+    const blackMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.6 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.5 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.58), blackMat);
+    body.position.set(0, 0.34, 0);
+    body.castShadow = true;
+    dog.add(body);
+
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.23, 0.16), whiteMat);
+    chest.position.set(0, 0.34, 0.24);
+    dog.add(chest);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.20), blackMat);
+    head.position.set(0, 0.49, 0.34);
+    head.castShadow = true;
+    dog.add(head);
+
+    const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.09, 0.12), whiteMat);
+    muzzle.position.set(0, 0.46, 0.46);
+    dog.add(muzzle);
+
+    const earGeo = new THREE.ConeGeometry(0.04, 0.09, 6);
+    const earL = new THREE.Mesh(earGeo, blackMat);
+    earL.position.set(-0.06, 0.61, 0.32);
+    const earR = new THREE.Mesh(earGeo, blackMat);
+    earR.position.set(0.06, 0.61, 0.32);
+    dog.add(earL, earR);
+
+    const legGeo = new THREE.CylinderGeometry(0.032, 0.028, 0.24, 8);
+    const legs = [
+      [-0.08, 0.12, 0.20], [0.08, 0.12, 0.20],
+      [-0.08, 0.12, -0.20], [0.08, 0.12, -0.20]
+    ];
+    legs.forEach(([lx, ly, lz], i) => {
+      const leg = new THREE.Mesh(legGeo, i < 2 ? whiteMat : blackMat);
+      leg.position.set(lx, ly, lz);
+      leg.castShadow = true;
+      dog.add(leg);
+    });
+
+    const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.015, 0.26, 8), blackMat);
+    tail.rotation.x = -Math.PI / 3;
+    tail.position.set(0, 0.36, -0.38);
+    dog.add(tail);
+
+    return dog;
+  }
+
+  function createHandlerMesh() {
+    const h = new THREE.Group();
+    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1E293B });
+    const shirtMat = new THREE.MeshStandardMaterial({ color: 0x0284C7 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xFDBA74 });
+
+    const legGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.85, 10);
+    const lL = new THREE.Mesh(legGeo, pantsMat); lL.position.set(-0.11, 0.425, 0); lL.castShadow = true;
+    const lR = new THREE.Mesh(legGeo, pantsMat); lR.position.set(0.11, 0.425, 0); lR.castShadow = true;
+
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.62, 12), shirtMat);
+    torso.position.set(0, 1.15, 0);
+    torso.castShadow = true;
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), skinMat);
+    head.position.set(0, 1.60, 0);
+    head.castShadow = true;
+
+    h.add(lL, lR, torso, head);
+    return h;
+  }
+
+  function init3D() {
+    if (renderer) return;
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0F172A);
+    scene.fog = new THREE.FogExp2(0x0F172A, 0.007);
+
+    const w = canvas3dWrap.clientWidth || window.innerWidth;
+    const h = canvas3dWrap.clientHeight || window.innerHeight - 130;
+    camera = new THREE.PerspectiveCamera(46, w / h, 0.1, 220);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(w, h);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    canvas3dWrap.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.maxPolarAngle = Math.PI * 0.485;
+    controls.minDistance = 2;
+    controls.maxDistance = 68;
+
+    const hemi = new THREE.HemisphereLight(0xFFFFFF, 0x2E6F40, 0.92);
+    scene.add(hemi);
+
+    const sun = new THREE.DirectionalLight(0xFFFBEB, 0.85);
+    sun.position.set(16, 28, 22);
+    sun.castShadow = true;
+    sun.shadow.mapSize.width = 1024;
+    sun.shadow.mapSize.height = 1024;
+    scene.add(sun);
+
+    worldGroup = new THREE.Group();
+    scene.add(worldGroup);
+
+    window.addEventListener('resize', resize3D);
+    loop3D();
+  }
+
+  function resize3D() {
+    if (!renderer || state.view !== '3d') return;
+    const w = canvas3dWrap.clientWidth;
+    const h = canvas3dWrap.clientHeight;
+    if (!w || !h) return;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+
+  function applyCamPreset(preset) {
+    camMode = preset;
+    document.querySelectorAll('.cam-pill[data-cam]').forEach(b => b.classList.toggle('active', b.dataset.cam === preset));
+
+    const cx = state.fieldW / 2;
+    const cz = state.fieldH / 2;
+
+    if (preset === 'iso') {
+      controls.rotateSpeed = 1.0;
+      controls.panSpeed = 1.0;
+      controls.target.set(cx, 0, cz);
+      camera.position.set(cx + 15, 17, cz + 21);
+    } else if (preset === 'top') {
+      controls.rotateSpeed = 1.0;
+      controls.panSpeed = 1.0;
+      controls.target.set(cx, 0, cz);
+      camera.position.set(cx, 35, cz + 0.01);
+    } else if (preset === 'handler') {
+      controls.rotateSpeed = -0.85;
+      controls.panSpeed = -0.85;
+      const zdc = state.obstacles.find(o => o.type === 'zdc') || { x: cx, y: state.fieldH - 5 };
+      camera.position.set(zdc.x, 1.65, zdc.y);
+      controls.target.set(cx, 1.05, cz - 4);
+    }
+    controls.update();
+  }
+
+  document.querySelectorAll('.cam-pill[data-cam]').forEach(btn => {
+    btn.addEventListener('click', () => applyCamPreset(btn.dataset.cam));
+  });
+
+  btnSimToggle.addEventListener('click', () => {
+    simRunning = !simRunning;
+    btnSimToggle.textContent = simRunning ? '⏸ Pausa Cane' : '▶ Simula Cane';
+  });
+
+  function build3D() {
+    if (!worldGroup) return;
+    while (worldGroup.children.length > 0) {
+      worldGroup.remove(worldGroup.children[0]);
+    }
+    dogMesh = null;
+    dogCurve = null;
+
+    const fw = state.fieldW;
+    const fh = state.fieldH;
+
+    // Bright green turf base with mowed stripes texture
+    const texCanvas = document.createElement('canvas');
+    texCanvas.width = 64;
+    texCanvas.height = 64;
+    const tctx = texCanvas.getContext('2d');
+    tctx.fillStyle = '#46A353';
+    tctx.fillRect(0, 0, 64, 32);
+    tctx.fillStyle = '#3C9148';
+    tctx.fillRect(0, 32, 64, 32);
+    const turfTex = new THREE.CanvasTexture(texCanvas);
+    turfTex.wrapS = THREE.RepeatWrapping;
+    turfTex.wrapT = THREE.RepeatWrapping;
+    turfTex.repeat.set(fw / 2, fh / 2);
+
+    const turf = new THREE.Mesh(
+      new THREE.PlaneGeometry(fw, fh),
+      new THREE.MeshStandardMaterial({ map: turfTex, roughness: 0.85 })
+    );
+    turf.rotation.x = -Math.PI / 2;
+    turf.position.set(fw / 2, 0, fh / 2);
+    turf.receiveShadow = true;
+    worldGroup.add(turf);
+
+    // White border lines & 2m grid
+    const borderPts = [
+      new THREE.Vector3(0, 0.015, 0), new THREE.Vector3(fw, 0.015, 0),
+      new THREE.Vector3(fw, 0.015, 0), new THREE.Vector3(fw, 0.015, fh),
+      new THREE.Vector3(fw, 0.015, fh), new THREE.Vector3(0, 0.015, fh),
+      new THREE.Vector3(0, 0.015, fh), new THREE.Vector3(0, 0.015, 0)
+    ];
+    worldGroup.add(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(borderPts),
+      new THREE.LineBasicMaterial({ color: 0xFFFFFF })
+    ));
+
+    const gridPts = [];
+    for (let x = 2; x < fw; x += 2) {
+      gridPts.push(new THREE.Vector3(x, 0.01, 0), new THREE.Vector3(x, 0.01, fh));
+    }
+    for (let z = 2; z < fh; z += 2) {
+      gridPts.push(new THREE.Vector3(0, 0.01, z), new THREE.Vector3(fw, 0.01, z));
+    }
+    worldGroup.add(new THREE.LineSegments(
+      new THREE.BufferGeometry().setFromPoints(gridPts),
+      new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.25 })
+    ));
+
+    // 3D Obstacles
+    state.obstacles.forEach(obs => {
+      const g = new THREE.Group();
+      g.position.set(obs.x, 0, obs.y);
+      g.rotation.y = -(obs.angle * Math.PI) / 180;
+
+      if (obs.type === 'hoop') {
+        const steelMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, metalness: 0.4, roughness: 0.3 });
+        const archMat = new THREE.MeshStandardMaterial({ color: 0xFACC15, roughness: 0.35 });
+        const footGeo = new THREE.BoxGeometry(0.06, 0.03, 0.45);
+        const fL = new THREE.Mesh(footGeo, steelMat); fL.position.set(-0.45, 0.015, 0);
+        const fR = new THREE.Mesh(footGeo, steelMat); fR.position.set(0.45, 0.015, 0);
+        const legGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.45, 12);
+        const lL = new THREE.Mesh(legGeo, steelMat); lL.position.set(-0.45, 0.225, 0); lL.castShadow = true;
+        const lR = new THREE.Mesh(legGeo, steelMat); lR.position.set(0.45, 0.225, 0); lR.castShadow = true;
+        const arch = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.02, 12, 32, Math.PI), archMat);
+        arch.position.set(0, 0.45, 0);
+        arch.castShadow = true;
+        g.add(fL, fR, lL, lR, arch);
+      } else if (obs.type === 'gate') {
+        const postMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+        const barMat = new THREE.MeshStandardMaterial({ color: 0x38BDF8 });
+        const footGeo = new THREE.BoxGeometry(0.06, 0.03, 0.42);
+        const fL = new THREE.Mesh(footGeo, postMat); fL.position.set(-0.60, 0.015, 0);
+        const fR = new THREE.Mesh(footGeo, postMat); fR.position.set(0.60, 0.015, 0);
+        const postGeo = new THREE.CylinderGeometry(0.024, 0.024, 0.85, 12);
+        const pL = new THREE.Mesh(postGeo, postMat); pL.position.set(-0.60, 0.425, 0); pL.castShadow = true;
+        const pR = new THREE.Mesh(postGeo, postMat); pR.position.set(0.60, 0.425, 0); pR.castShadow = true;
+        const barGeo = new THREE.BoxGeometry(1.20, 0.04, 0.04);
+        const b1 = new THREE.Mesh(barGeo, barMat); b1.position.set(0, 0.35, 0); b1.castShadow = true;
+        const b2 = new THREE.Mesh(barGeo, barMat); b2.position.set(0, 0.68, 0); b2.castShadow = true;
+        g.add(fL, fR, pL, pR, b1, b2);
+      } else if (obs.type === 'barrel') {
+        const body = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.30, 0.30, 0.78, 24),
+          new THREE.MeshStandardMaterial({ color: 0xF43F5E, roughness: 0.4 })
+        );
+        body.position.set(0, 0.39, 0);
+        body.castShadow = true;
+        const stripe = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.304, 0.304, 0.15, 24),
+          new THREE.MeshStandardMaterial({ color: 0xFFFFFF })
+        );
+        stripe.position.set(0, 0.42, 0);
+        g.add(body, stripe);
+      } else if (obs.type === 'tunnel') {
+        const len = obs.length || 1.0;
+        const tun = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.40, 0.40, len, 24, 1, true, 0, Math.PI),
+          new THREE.MeshStandardMaterial({ color: 0xA855F7, side: THREE.DoubleSide, roughness: 0.45 })
+        );
+        tun.rotation.z = Math.PI / 2;
+        tun.rotation.y = Math.PI / 2;
+        tun.position.set(0, 0.02, 0);
+        tun.castShadow = true;
+        g.add(tun);
+      } else if (obs.type === 'zdc') {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.92, 1.0, 36),
+          new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(0, 0.02, 0);
+        g.add(ring);
+
+        if (camMode !== 'handler') {
+          const handler = createHandlerMesh();
+          g.add(handler);
+        }
+      }
+
+      worldGroup.add(g);
+    });
+
+    // 3D glowing dog path + Border Collie animation curve
+    const segs = computePathSegments();
+    const pathMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const curvePath = new THREE.CurvePath();
+
+    segs.forEach(s => {
+      const curve = s.kind === 'through'
+        ? new THREE.LineCurve3(new THREE.Vector3(s.p0.x, 0.07, s.p0.y), new THREE.Vector3(s.p1.x, 0.07, s.p1.y))
+        : new THREE.CubicBezierCurve3(
+            new THREE.Vector3(s.p0.x, 0.07, s.p0.y),
+            new THREE.Vector3(s.cp1.x, 0.07, s.cp1.y),
+            new THREE.Vector3(s.cp2.x, 0.07, s.cp2.y),
+            new THREE.Vector3(s.p1.x, 0.07, s.p1.y)
+          );
+      curvePath.add(curve);
+      const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.045, 8, false), pathMat);
+      worldGroup.add(tube);
+    });
+
+    if (curvePath.curves.length > 0) {
+      dogCurve = curvePath;
+      dogMesh = createBorderCollieMesh();
+      const startPt = dogCurve.getPointAt(0);
+      dogMesh.position.set(startPt.x, 0, startPt.z);
+      worldGroup.add(dogMesh);
+    }
+  }
+
+  function loop3D() {
+    requestAnimationFrame(loop3D);
+    if (state.view === '3d' && renderer && scene && camera) {
+      if (simRunning && dogMesh && dogCurve) {
+        simT = (simT + 0.0022) % 1;
+        const pt = dogCurve.getPointAt(simT);
+        const tan = dogCurve.getTangentAt(simT);
+        dogMesh.position.set(pt.x, Math.abs(Math.sin(simT * 90)) * 0.06, pt.z);
+        dogMesh.lookAt(pt.x + tan.x, 0, pt.z + tan.z);
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+  }
+
+  // ==================== MASTER RENDER ====================
+  function renderAll() {
+    render2D();
+    renderInspector();
+    if (state.view === '3d') build3D();
+  }
+
+  // ==================== UI BINDINGS ====================
+  document.getElementById('selCat').addEventListener('change', (e) => {
+    state.category = e.target.value;
+    pushHist();
+    renderAll();
+  });
+
+  document.getElementById('selClass').addEventListener('change', (e) => {
+    state.courseClass = e.target.value;
+    pushHist();
+    renderAll();
+  });
+
+  document.getElementById('selField').addEventListener('change', (e) => {
+    const [w, h] = e.target.value.split('x').map(Number);
+    state.fieldW = w;
+    state.fieldH = h;
+    fitField();
+    pushHist();
+    renderAll();
+  });
+
+  document.getElementById('opt2D').addEventListener('click', () => {
+    state.view = '2d';
+    document.getElementById('opt2D').classList.add('active');
+    document.getElementById('opt3D').classList.remove('active');
+    canvas2dWrap.style.display = 'block';
+    canvas3dWrap.style.display = 'none';
+    camStack.style.display = 'none';
+    simBar.style.display = 'none';
+    render2D();
+  });
+
+  document.getElementById('opt3D').addEventListener('click', () => {
+    state.view = '3d';
+    document.getElementById('opt3D').classList.add('active');
+    document.getElementById('opt2D').classList.remove('active');
+    canvas2dWrap.style.display = 'none';
+    canvas3dWrap.style.display = 'block';
+    camStack.style.display = 'flex';
+    simBar.style.display = 'flex';
+    init3D();
+    resize3D();
+    build3D();
+    applyCamPreset(camMode);
+  });
+
+  document.getElementById('optMove').addEventListener('click', () => {
+    state.mode = 'move';
+    document.getElementById('optMove').classList.add('active');
+    document.getElementById('optSeq').classList.remove('active');
+    toast('Modalità Sposta / Ruota');
+  });
+
+  document.getElementById('optSeq').addEventListener('click', () => {
+    state.mode = 'sequence';
+    document.getElementById('optSeq').classList.add('active');
+    document.getElementById('optMove').classList.remove('active');
+    toast('Tocca gli ostacoli in ordine 1 → N');
+  });
+
+  document.querySelectorAll('.dock-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.add;
+      const cx = snap025(state.fieldW / 2 + (Math.random() - 0.5) * 2);
+      const cy = snap025(state.fieldH / 2 + (Math.random() - 0.5) * 2);
+      const obs = {
+        id: uid(),
+        type,
+        x: cx,
+        y: cy,
+        angle: 0,
+        length: type === 'tunnel' ? 1.0 : type === 'gate' ? 1.2 : type === 'barrel' ? 0.6 : type === 'zdc' ? 2.0 : 0.9
+      };
+      state.obstacles.push(obs);
+      state.selectedId = obs.id;
+      pushHist();
+      renderAll();
+      toast(`Aggiunto ${labelFor(obs)}`);
+    });
+  });
+
+  document.getElementById('btnUndo').addEventListener('click', () => {
+    if (historyIdx > 0) {
+      historyIdx--;
+      restoreSnap(history[historyIdx]);
+      syncHistBtns();
+    }
+  });
+
+  document.getElementById('btnRedo').addEventListener('click', () => {
+    if (historyIdx < history.length - 1) {
+      historyIdx++;
+      restoreSnap(history[historyIdx]);
+      syncHistBtns();
+    }
+  });
+
+  // Bottom Sheet Modal
+  function openSheet(mode) {
+    sheetMask.classList.add('open');
+    if (mode === 'validation') {
+      sheetTitle.textContent = 'Validazione & Sequenza CSEN 2026';
+      sheetTabs.style.display = 'flex';
+      renderSheetTab('rules');
+    } else if (mode === 'presets') {
+      sheetTitle.textContent = 'Percorsi Preset CSEN 2026';
+      sheetTabs.style.display = 'none';
+      sheetBody.innerHTML = Object.entries(PRESETS).map(([k, p]) => `
+        <div class="card-row">
+          <div>
+            <strong>${p.name}</strong><br/>
+            <span style="color:var(--text-secondary);font-size:11px;">Campo ${p.fieldW}×${p.fieldH}m • ${p.courseClass}</span>
+          </div>
+          <button class="btn-chip accent" data-preset="${k}">Carica</button>
+        </div>
+      `).join('');
+    } else if (mode === 'json') {
+      sheetTitle.textContent = 'Progetto ZenHoop (.JSON)';
+      sheetTabs.style.display = 'none';
+      sheetBody.innerHTML = `
+        <div class="card-row">
+          <span>Esporta configurazione completa (.json)</span>
+          <button id="expJson" class="btn-chip accent">Scarica JSON</button>
+        </div>
+        <div class="card-row">
+          <span>Importa file progetto (.json)</span>
+          <button id="impJson" class="btn-chip">Apri File</button>
+        </div>
+        <div class="card-row">
+          <span>Svuota campo e ricomincia</span>
+          <button id="clrField" class="btn-chip danger">Reset Campo</button>
+        </div>
+      `;
+    }
+  }
+
+  function renderSheetTab(tab) {
+    document.querySelectorAll('.sheet-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    if (tab === 'rules') {
+      const issues = validateCourse();
+      if (issues.length === 0) {
+        sheetBody.innerHTML = `<div class="card-rule">✓ <strong>Percorso 100% Conforme al Regolamento Hoopers CSEN 2026</strong> (${state.category} — ${state.courseClass}).</div>`;
+      } else {
+        sheetBody.innerHTML = issues.map(i => `<div class="card-rule ${i.level}">${i.level === 'err' ? '✕' : '⚠'} ${i.text}</div>`).join('');
+      }
+    } else {
+      if (state.sequence.length === 0) {
+        sheetBody.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">Nessun passaggio nella sequenza. Seleziona <strong>1→N</strong> e tocca gli ostacoli in ordine.</div>`;
+        return;
+      }
+      sheetBody.innerHTML = state.sequence.map((item, idx) => {
+        const obs = state.obstacles.find(o => o.id === item.obsId);
+        if (!obs) return '';
+        const sideTxt = obs.type === 'gate' ? (item.side === 1 ? ' (Lato A)' : ' (Lato B)')
+          : obs.type === 'barrel' ? (item.side === 1 ? ' (Destra)' : ' (Sinistra)') : '';
+        return `<div class="card-row">
+          <span><strong>#${idx + 1}</strong> ${labelFor(obs)}${sideTxt}</span>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-chip" data-smove="-1" data-idx="${idx}">↑</button>
+            <button class="btn-chip" data-smove="1" data-idx="${idx}">↓</button>
+            <button class="btn-chip danger" data-sdel="${idx}">✕</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  sheetTabs.addEventListener('click', (e) => {
+    const t = e.target.closest('.sheet-tab');
+    if (t) renderSheetTab(t.dataset.tab);
+  });
+
+  sheetBody.addEventListener('click', (e) => {
+    const pBtn = e.target.closest('[data-preset]');
+    if (pBtn) {
+      loadPreset(pBtn.dataset.preset);
+      sheetMask.classList.remove('open');
+      return;
+    }
+    const mBtn = e.target.closest('[data-smove]');
+    if (mBtn) {
+      const idx = parseInt(mBtn.dataset.idx, 10);
+      const dir = parseInt(mBtn.dataset.smove, 10);
+      const tgt = idx + dir;
+      if (tgt >= 0 && tgt < state.sequence.length) {
+        const tmp = state.sequence[idx];
+        state.sequence[idx] = state.sequence[tgt];
+        state.sequence[tgt] = tmp;
+        pushHist();
+        renderAll();
+        renderSheetTab('sequence');
+      }
+      return;
+    }
+    const dBtn = e.target.closest('[data-sdel]');
+    if (dBtn) {
+      const idx = parseInt(dBtn.dataset.sdel, 10);
+      state.sequence.splice(idx, 1);
+      pushHist();
+      renderAll();
+      renderSheetTab('sequence');
+      return;
+    }
+    if (e.target.id === 'expJson') {
+      const blob = new Blob([JSON.stringify({ app: 'ZenHoop', version: 'CSEN-2026', ...state }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `ZenHoop_${state.courseClass}_${state.category}.json`;
+      a.click();
+      sheetMask.classList.remove('open');
+      toast('Progetto JSON scaricato');
+    } else if (e.target.id === 'impJson') {
+      document.getElementById('fileJson').click();
+    } else if (e.target.id === 'clrField') {
+      state.obstacles = [];
+      state.sequence = [];
+      state.selectedId = null;
+      state.selectedSeqIdx = null;
+      pushHist();
+      renderAll();
+      sheetMask.classList.remove('open');
+      toast('Campo azzerato');
+    }
+  });
+
+  document.getElementById('fileJson').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const d = JSON.parse(reader.result);
+        if (Array.isArray(d.obstacles)) {
+          state.category = d.category || 'Standard';
+          state.courseClass = d.courseClass || 'Avviamento';
+          state.fieldW = d.fieldW || 20;
+          state.fieldH = d.fieldH || 40;
+          state.obstacles = d.obstacles;
+          state.sequence = d.sequence || [];
+          syncSelects();
+          fitField();
+          pushHist();
+          renderAll();
+          sheetMask.classList.remove('open');
+          toast('Progetto caricato');
+        }
+      } catch (err) {
+        toast('File JSON non valido');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  badgeStatus.addEventListener('click', () => openSheet('validation'));
+  document.getElementById('btnPresets').addEventListener('click', () => openSheet('presets'));
+  document.getElementById('btnJson').addEventListener('click', () => openSheet('json'));
+  document.getElementById('btnCloseSheet').addEventListener('click', () => sheetMask.classList.remove('open'));
+  sheetMask.addEventListener('click', (e) => {
+    if (e.target === sheetMask) sheetMask.classList.remove('open');
+  });
+
+  // Export PNG
+  document.getElementById('btnPng').addEventListener('click', () => {
+    const prev = state.selectedId;
+    state.selectedId = null;
+    render2D();
+
+    const ser = new XMLSerializer();
+    const clone = svg.cloneNode(true);
+    clone.setAttribute('width', '1200');
+    clone.setAttribute('height', '1800');
+    const url = URL.createObjectURL(new Blob([ser.serializeToString(clone)], { type: 'image/svg+xml;charset=utf-8' }));
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = 1200;
+      c.height = 1800;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0F172A';
+      ctx.fillRect(0, 0, c.width, c.height);
+      ctx.drawImage(img, 0, 80, 1200, 1700);
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 34px sans-serif';
+      ctx.fillText(`ZenHoop — CSEN 2026 | ${state.category} • ${state.courseClass} (${state.fieldW}×${state.fieldH}m)`, 40, 52);
+      URL.revokeObjectURL(url);
+
+      const link = document.createElement('a');
+      link.download = `ZenHoop_${state.courseClass}_${state.category}.png`;
+      link.href = c.toDataURL('image/png');
+      link.click();
+
+      state.selectedId = prev;
+      render2D();
+      toast('Planimetria PNG scaricata');
+    };
+    img.src = url;
+  });
+
+  // ==================== INIT ====================
+  let loaded = false;
+  try {
+    const raw = localStorage.getItem('zenhoop_csen2026_v3');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.obstacles) && parsed.obstacles.length > 0) {
+        state.category = parsed.category || 'Standard';
+        state.courseClass = parsed.courseClass || 'Avviamento';
+        state.fieldW = parsed.fieldW || 20;
+        state.fieldH = parsed.fieldH || 40;
+        state.obstacles = parsed.obstacles;
+        state.sequence = parsed.sequence || [];
+        syncSelects();
+        fitField();
+        pushHist();
+        renderAll();
+        loaded = true;
+      }
+    }
+  } catch (e) {}
+
+  if (!loaded) {
+    loadPreset('avviamento', true);
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').then(reg => reg.update()).catch(() => {});
+    });
+  }
+})();
+</script>
+</body>
+</html>

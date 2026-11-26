@@ -1,0 +1,2439 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="ZenHoop" />
+  <title>ZenHoop — Hoopers Designer CSEN 2026</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
+  <style>
+    :root {
+      --bg-app: #0F172A;
+      --bg-panel: #1E293B;
+      --bg-panel-alt: #273549;
+      --border: #334155;
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --accent: #38BDF8;
+      --accent-dark: #0284C7;
+      --gold: #FFD166;
+      --ok: #06D6A0;
+      --err: #EF476F;
+      --warn: #F59E0B;
+      --turf: #1B4332;
+      --turf-grid: #2D6A4F;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      background: var(--bg-app);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--bg-panel);
+      border-bottom: 1px solid var(--border);
+      min-height: 44px;
+      z-index: 20;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      white-space: nowrap;
+      transition: transform 0.1s;
+    }
+    .status-pill:active { transform: scale(0.96); }
+    .status-pill.ok {
+      background: rgba(6, 214, 160, 0.16);
+      color: var(--ok);
+      border-color: rgba(6, 214, 160, 0.45);
+    }
+    .status-pill.err {
+      background: rgba(239, 71, 111, 0.18);
+      color: #FF7597;
+      border-color: rgba(239, 71, 111, 0.5);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: auto;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel-alt);
+      color: var(--text-main);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      flex-shrink: 0;
+    }
+    .icon-btn:active { background: #334155; transform: scale(0.95); }
+    .icon-btn:disabled { opacity: 0.38; pointer-events: none; }
+    .icon-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* SUBBAR EVENT + RULES */
+    .subbar {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      padding: 5px 8px;
+      background: #141E33;
+      border-bottom: 1px solid var(--border);
+      z-index: 19;
+    }
+
+    .event-row {
+      display: grid;
+      grid-template-columns: 1fr 118px;
+      gap: 5px;
+    }
+
+    .event-input {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      color: var(--text-main);
+      padding: 4px 8px;
+      font-size: 12px;
+      height: 28px;
+      width: 100%;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .event-input::placeholder { color: var(--text-muted); }
+    .event-input:focus { outline: none; border-color: var(--accent); }
+
+    .controls-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .controls-row::-webkit-scrollbar { display: none; }
+
+    select.compact-sel {
+      background: var(--bg-panel);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      height: 29px;
+      padding: 0 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .seg-group {
+      display: inline-flex;
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 2px;
+      flex-shrink: 0;
+    }
+    .seg-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 11.5px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+      height: 23px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+    .seg-btn.active {
+      background: var(--accent);
+      color: #0F172A;
+    }
+    .seg-btn.seq-active {
+      background: var(--gold);
+      color: #0F172A;
+    }
+
+    /* MAIN STAGE */
+    .stage {
+      position: relative;
+      flex: 1 1 auto;
+      width: 100%;
+      overflow: hidden;
+      background: #090E1A;
+    }
+
+    #view-2d, #view-3d {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #view-3d { display: none; }
+
+    #field-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* FLOATING OVERLAYS */
+    .zoom-fab {
+      position: absolute;
+      right: 10px;
+      bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 12;
+    }
+    .zoom-fab button {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(15, 23, 42, 0.88);
+      color: var(--text-main);
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+    .zoom-fab button:active { transform: scale(0.94); }
+
+    /* CONTEXT BAR FOR SELECTED ITEM */
+    .context-bar {
+      position: absolute;
+      left: 8px;
+      right: 54px;
+      bottom: 12px;
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 6px 8px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      z-index: 14;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+    .context-bar.visible { display: flex; }
+
+    .ctx-info {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+    .ctx-title {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--accent);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .ctx-sub {
+      font-size: 10.5px;
+      color: var(--text-muted);
+    }
+
+    .ctx-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .ctx-btn {
+      height: 30px;
+      padding: 0 8px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel-alt);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+    }
+    .ctx-btn.primary {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .ctx-btn.danger {
+      background: rgba(239, 71, 111, 0.18);
+      border-color: var(--err);
+      color: #FF7597;
+    }
+
+    /* 3D CONTROLS OVERLAY */
+    .hud-3d-top {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .hud-3d-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      pointer-events: auto;
+      backdrop-filter: blur(6px);
+    }
+    .hud-btn {
+      height: 28px;
+      padding: 0 9px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      background: var(--bg-panel-alt);
+      color: var(--text-main);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .hud-btn.active {
+      background: var(--accent);
+      color: #0F172A;
+    }
+    .hud-btn.play-active {
+      background: var(--ok);
+      color: #0F172A;
+    }
+
+    .hud-3d-bottom {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .hud-3d-bottom .hud-btn {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.9);
+      border-color: var(--border);
+      height: 32px;
+      padding: 0 10px;
+      backdrop-filter: blur(6px);
+    }
+    .hud-3d-bottom .hud-btn.active {
+      background: var(--accent);
+      color: #0F172A;
+      border-color: var(--accent);
+    }
+
+    /* BOTTOM EQUIPMENT TOOLBAR */
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      padding: 6px 8px;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      z-index: 20;
+    }
+
+    .tool-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 5px 2px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--bg-panel-alt);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    .tool-btn:active {
+      background: #334155;
+      border-color: var(--accent);
+      transform: scale(0.96);
+    }
+    .tool-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+    .tool-name {
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.1;
+    }
+    .tool-dim {
+      font-size: 9.5px;
+      color: var(--text-muted);
+      line-height: 1;
+    }
+
+    /* DRAWER / MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.72);
+      z-index: 50;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .drawer {
+      width: 100%;
+      max-width: 540px;
+      max-height: 82dvh;
+      background: var(--bg-panel);
+      border-top: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+    }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-title {
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .drawer-body {
+      padding: 12px 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .val-item {
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.4;
+      border: 1px solid var(--border);
+      background: var(--bg-app);
+    }
+    .val-item.err { border-color: rgba(239, 71, 111, 0.5); color: #FF8FA9; }
+    .val-item.warn { border-color: rgba(245, 158, 11, 0.5); color: #FCD34D; }
+    .val-item.ok { border-color: rgba(6, 214, 160, 0.45); color: var(--ok); }
+
+    .seq-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 7px 9px;
+      background: var(--bg-app);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .preset-card {
+      padding: 11px 12px;
+      background: var(--bg-app);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .preset-card:active { border-color: var(--accent); }
+
+    .toast {
+      position: fixed;
+      top: 54px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--accent);
+      color: var(--text-main);
+      padding: 7px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 90;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <!-- TOP HEADER (no app title on left per user request) -->
+  <header class="topbar">
+    <button id="btn-validation" class="status-pill ok" title="Verifica Regolamento CSEN 2026">
+      <span id="status-icon">✓</span>
+      <span id="status-text">Conforme</span>
+    </button>
+
+    <div class="top-actions">
+      <button id="btn-undo" class="icon-btn" title="Annulla (Undo)" disabled>
+        <svg viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button id="btn-redo" class="icon-btn" title="Ripeti (Redo)" disabled>
+        <svg viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+      </button>
+      <button id="btn-presets" class="icon-btn" title="Percorsi Preset CSEN 2026">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+      </button>
+      <button id="btn-export-png" class="icon-btn" title="Esporta Planimetria PNG">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+      </button>
+      <button id="btn-io" class="icon-btn" title="Salva / Carica JSON">
+        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- EVENT METADATA & CSEN 2026 CONTROLS -->
+  <section class="subbar">
+    <div class="event-row">
+      <input id="inp-event-name" class="event-input" type="text" placeholder="Nome Evento / Gara..." maxlength="48" />
+      <input id="inp-event-date" class="event-input" type="date" />
+    </div>
+    <div class="controls-row">
+      <select id="sel-category" class="compact-sel" title="Categoria Altezza Garrese CSEN">
+        <option value="Small">Small (&lt;43cm)</option>
+        <option value="Standard" selected>Standard (≥43cm)</option>
+      </select>
+      <select id="sel-class" class="compact-sel" title="Classe CSEN 2026">
+        <option value="Experience">Experience</option>
+        <option value="Avviamento" selected>Avviamento</option>
+        <option value="Junior">Junior</option>
+        <option value="Senior">Senior</option>
+        <option value="Elite">Elite</option>
+      </select>
+      <select id="sel-field" class="compact-sel" title="Dimensioni Campo">
+        <option value="20x40" selected>20×40m</option>
+        <option value="18x36">18×36m</option>
+        <option value="15x30">15×30m</option>
+      </select>
+
+      <div class="seg-group">
+        <button id="btn-view-2d" class="seg-btn active">2D</button>
+        <button id="btn-view-3d" class="seg-btn">3D</button>
+      </div>
+
+      <div class="seg-group">
+        <button id="btn-mode-edit" class="seg-btn active">Sposta</button>
+        <button id="btn-mode-seq" class="seg-btn">1→N</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- WORKSPACE STAGE -->
+  <main class="stage">
+    <!-- 2D VIEW -->
+    <div id="view-2d">
+      <svg id="field-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <div id="context-bar" class="context-bar">
+        <div class="ctx-info">
+          <div id="ctx-title" class="ctx-title">Attrezzo</div>
+          <div id="ctx-sub" class="ctx-sub">X: 10.0m Y: 20.0m • 0°</div>
+        </div>
+        <div id="ctx-actions" class="ctx-actions"></div>
+      </div>
+
+      <div class="zoom-fab">
+        <button id="btn-zoom-in" title="Ingrandisci">+</button>
+        <button id="btn-zoom-out" title="Riduci">−</button>
+        <button id="btn-zoom-fit" title="Adatta Campo">⊡</button>
+      </div>
+    </div>
+
+    <!-- 3D VIEW -->
+    <div id="view-3d">
+      <div class="hud-3d-top">
+        <div class="hud-3d-group">
+          <button id="btn-3d-play" class="hud-btn">▶ Avvia Corsa</button>
+          <button id="btn-3d-reset-run" class="hud-btn" title="Riavvia Corsa">↺</button>
+          <button id="btn-3d-speed" class="hud-btn" title="Velocità">1.0x</button>
+        </div>
+      </div>
+
+      <div class="hud-3d-bottom">
+        <button id="btn-cam-iso" class="hud-btn active">Isometrica</button>
+        <button id="btn-cam-top" class="hud-btn">Dall'Alto</button>
+        <button id="btn-cam-handler" class="hud-btn">Vista Conduttore</button>
+        <button id="btn-cam-follow" class="hud-btn">Segui Cane</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- BOTTOM TOOLBAR -->
+  <footer class="toolbar">
+    <button class="tool-btn" data-add="hoop">
+      <svg viewBox="0 0 24 24"><path d="M4 20V11a8 8 0 0 1 16 0v9" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-linecap="round"/></svg>
+      <span class="tool-name">Hoop</span>
+      <span class="tool-dim">0.90m</span>
+    </button>
+    <button class="tool-btn" data-add="gate">
+      <svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="8" rx="1.5" fill="none" stroke="#F8FAFC" stroke-width="2.2"/><line x1="8" y1="8" x2="8" y2="16" stroke="#38BDF8" stroke-width="2"/><line x1="16" y1="8" x2="16" y2="16" stroke="#38BDF8" stroke-width="2"/></svg>
+      <span class="tool-name">Gate</span>
+      <span class="tool-dim">1.20m</span>
+    </button>
+    <button class="tool-btn" data-add="barrel">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5" fill="#F97316" stroke="#F8FAFC" stroke-width="2"/><line x1="12" y1="4.5" x2="12" y2="10" stroke="#0F172A" stroke-width="2.2"/></svg>
+      <span class="tool-name">Barrel</span>
+      <span class="tool-dim">Ø 0.60m</span>
+    </button>
+    <button class="tool-btn" data-add="tunnel">
+      <svg viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="5" fill="#3B82F6" stroke="#F8FAFC" stroke-width="2"/></svg>
+      <span class="tool-name">Tunnel</span>
+      <span class="tool-dim">1m / 3m</span>
+    </button>
+    <button class="tool-btn" data-add="zdc">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="rgba(255,209,102,0.22)" stroke="#FFD166" stroke-width="2" stroke-dasharray="3 2"/><text x="12" y="15" text-anchor="middle" fill="#FFD166" font-size="7" font-weight="bold">ZdC</text></svg>
+      <span class="tool-name">ZdC</span>
+      <span class="tool-dim">Ø 2.00m</span>
+    </button>
+  </footer>
+</div>
+
+<!-- MODAL DRAWER -->
+<div id="modal-backdrop" class="modal-backdrop">
+  <div class="drawer">
+    <div class="drawer-header">
+      <span id="drawer-title" class="drawer-title">Dettagli</span>
+      <button id="btn-close-drawer" class="icon-btn">✕</button>
+    </div>
+    <div id="drawer-body" class="drawer-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+<input id="file-import" type="file" accept=".json,application/json" style="display:none" />
+
+<script>
+(function() {
+  'use strict';
+
+  /* =========================================================
+     CSEN 2026 RULES & SPECIFICATIONS
+     ========================================================= */
+  const CSEN_RULES = {
+    Small: {
+      Experience: { minObs: 8,  maxObs: 14, minDist: 3.0, maxDist: 6.0, maxZdcRadius: 8.0,  allowTunnel: false },
+      Avviamento: { minObs: 10, maxObs: 16, minDist: 3.5, maxDist: 6.5, maxZdcRadius: 10.0, allowTunnel: true },
+      Junior:     { minObs: 12, maxObs: 18, minDist: 3.5, maxDist: 7.0, maxZdcRadius: 13.0, allowTunnel: true },
+      Senior:     { minObs: 15, maxObs: 22, minDist: 3.5, maxDist: 8.0, maxZdcRadius: 16.0, allowTunnel: true },
+      Elite:      { minObs: 18, maxObs: 25, minDist: 3.5, maxDist: 9.0, maxZdcRadius: 22.0, allowTunnel: true }
+    },
+    Standard: {
+      Experience: { minObs: 8,  maxObs: 14, minDist: 3.5, maxDist: 7.0, maxZdcRadius: 9.0,  allowTunnel: false },
+      Avviamento: { minObs: 10, maxObs: 16, minDist: 4.0, maxDist: 7.5, maxZdcRadius: 11.0, allowTunnel: true },
+      Junior:     { minObs: 12, maxObs: 18, minDist: 4.0, maxDist: 8.0, maxZdcRadius: 14.0, allowTunnel: true },
+      Senior:     { minObs: 15, maxObs: 22, minDist: 4.0, maxDist: 9.0, maxZdcRadius: 18.0, allowTunnel: true },
+      Elite:      { minObs: 18, maxObs: 25, minDist: 4.0, maxDist: 10.5, maxZdcRadius: 25.0, allowTunnel: true }
+    }
+  };
+
+  const EQUIP_SPECS = {
+    hoop:   { label: 'Hoop',   width: 0.90, depth: 0.25, radius: 0.50 },
+    gate:   { label: 'Gate',   width: 1.20, depth: 0.25, radius: 0.65 },
+    barrel: { label: 'Barrel', width: 0.60, depth: 0.60, radius: 0.35 },
+    tunnel: { label: 'Tunnel', width: 0.80, depth: 1.00, radius: 0.55 },
+    zdc:    { label: 'ZdC',    width: 2.00, depth: 2.00, radius: 1.00 }
+  };
+
+  /* =========================================================
+     APPLICATION STATE
+     ========================================================= */
+  let state = {
+    eventName: '',
+    eventDate: new Date().toISOString().slice(0, 10),
+    category: 'Standard',
+    csenClass: 'Avviamento',
+    fieldW: 20,
+    fieldH: 40,
+    view: '2d',
+    mode: 'edit',
+    selectedId: null,
+    selectedStepIdx: null,
+    items: [],
+    sequence: [] // [{ id, side: 1 | -1 }]
+  };
+
+  let historyPast = [];
+  let historyFuture = [];
+
+  // 2D Viewport transform (field meters -> SVG viewBox)
+  let pan2D = { x: 0, y: 0, zoom: 1 };
+
+  // 3D State
+  let threeReady = false;
+  let threeLoading = false;
+  let scene, camera, renderer, controls;
+  let fieldGroup, equipGroup, pathMesh3D, dogGroup, handlerGroup;
+  let dogParts = null;
+  let handlerParts = null;
+  let simCurve3D = null;
+  let simPlaying = false;
+  let simProgress = 0;
+  let simSpeed = 1.0;
+  let camMode3D = 'iso'; // 'iso' | 'top' | 'handler' | 'follow'
+  let lastFrameTime = performance.now();
+
+  const STORAGE_KEY = 'zenhoop_csen2026_v1';
+
+  /* =========================================================
+     UTILITIES
+     ========================================================= */
+  function uid() {
+    return 'id_' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2100);
+  }
+
+  function deg2rad(d) { return (d * Math.PI) / 180; }
+  function snap025(v) { return Math.round(v * 4) / 4; }
+  function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+  function cloneSnapshot() {
+    return JSON.stringify({
+      eventName: state.eventName,
+      eventDate: state.eventDate,
+      category: state.category,
+      csenClass: state.csenClass,
+      fieldW: state.fieldW,
+      fieldH: state.fieldH,
+      items: state.items,
+      sequence: state.sequence
+    });
+  }
+
+  function pushHistory() {
+    historyPast.push(cloneSnapshot());
+    if (historyPast.length > 40) historyPast.shift();
+    historyFuture = [];
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons() {
+    document.getElementById('btn-undo').disabled = historyPast.length === 0;
+    document.getElementById('btn-redo').disabled = historyFuture.length === 0;
+  }
+
+  function undo() {
+    if (!historyPast.length) return;
+    historyFuture.push(cloneSnapshot());
+    const prev = JSON.parse(historyPast.pop());
+    Object.assign(state, prev);
+    state.selectedId = null;
+    state.selectedStepIdx = null;
+    syncUIFromState();
+    renderAll();
+    updateUndoRedoButtons();
+  }
+
+  function redo() {
+    if (!historyFuture.length) return;
+    historyPast.push(cloneSnapshot());
+    const next = JSON.parse(historyFuture.pop());
+    Object.assign(state, next);
+    state.selectedId = null;
+    state.selectedStepIdx = null;
+    syncUIFromState();
+    renderAll();
+    updateUndoRedoButtons();
+  }
+
+  function saveLocal() {
+    try { localStorage.setItem(STORAGE_KEY, cloneSnapshot()); } catch (e) {}
+  }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.items)) {
+          Object.assign(state, parsed);
+          return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  /* =========================================================
+     PRESETS CSEN 2026
+     ========================================================= */
+  const PRESETS = [
+    {
+      name: 'Avviamento Base (12 Passaggi)',
+      desc: 'Percorso fluido per categoria Standard/Small classe Avviamento con ZdC centrale.',
+      category: 'Standard',
+      csenClass: 'Avviamento',
+      fieldW: 20,
+      fieldH: 40,
+      items: [
+        { id: 'z1', type: 'zdc',    x: 10,   y: 33,   angle: 0 },
+        { id: 'h1', type: 'hoop',   x: 10,   y: 28,   angle: 0 },
+        { id: 'h2', type: 'hoop',   x: 10,   y: 22.5, angle: 0 },
+        { id: 'b1', type: 'barrel', x: 10,   y: 16.5, angle: 0 },
+        { id: 'h3', type: 'hoop',   x: 14.5, y: 14.5, angle: 75 },
+        { id: 'g1', type: 'gate',   x: 16,   y: 9.5,  angle: 90 },
+        { id: 'h4', type: 'hoop',   x: 12,   y: 6,    angle: -60 },
+        { id: 't1', type: 'tunnel', x: 6.5,  y: 7.5,  angle: -135, length: 1.0 },
+        { id: 'h5', type: 'hoop',   x: 4.5,  y: 13.5, angle: 180 },
+        { id: 'b2', type: 'barrel', x: 5.5,  y: 19.5, angle: 180 },
+        { id: 'h6', type: 'hoop',   x: 7.5,  y: 25,   angle: 165 },
+        { id: 'h7', type: 'hoop',   x: 8.5,  y: 30.5, angle: 180 }
+      ],
+      sequence: [
+        { id: 'h1', side: 1 }, { id: 'h2', side: 1 }, { id: 'b1', side: 1 },
+        { id: 'h3', side: 1 }, { id: 'g1', side: 1 }, { id: 'h4', side: 1 },
+        { id: 't1', side: 1 }, { id: 'h5', side: 1 }, { id: 'b2', side: 1 },
+        { id: 'h6', side: 1 }, { id: 'h7', side: 1 }
+      ]
+    },
+    {
+      name: 'Junior Flow & Doppio Barrel',
+      desc: 'Linee veloci con cambio lato su Gate e doppia lettura su Barrel.',
+      category: 'Standard',
+      csenClass: 'Junior',
+      fieldW: 20,
+      fieldH: 40,
+      items: [
+        { id: 'z1', type: 'zdc',    x: 10,   y: 34,   angle: 0 },
+        { id: 'h1', type: 'hoop',   x: 7,    y: 29,   angle: -15 },
+        { id: 'g1', type: 'gate',   x: 6,    y: 23,   angle: 90 },
+        { id: 'h2', type: 'hoop',   x: 7.5,  y: 17,   angle: 20 },
+        { id: 'b1', type: 'barrel', x: 10,   y: 11,   angle: 0 },
+        { id: 't1', type: 'tunnel', x: 14.5, y: 8.5,  angle: 90, length: 3.0 },
+        { id: 'h3', type: 'hoop',   x: 15.5, y: 15,   angle: 180 },
+        { id: 'b2', type: 'barrel', x: 14,   y: 21,   angle: 180 },
+        { id: 'h4', type: 'hoop',   x: 11.5, y: 26,   angle: -145 },
+        { id: 'h5', type: 'hoop',   x: 13.5, y: 31,   angle: 160 }
+      ],
+      sequence: [
+        { id: 'h1', side: 1 }, { id: 'g1', side: 1 }, { id: 'h2', side: 1 },
+        { id: 'b1', side: 1 }, { id: 't1', side: 1 }, { id: 'h3', side: 1 },
+        { id: 'b2', side: -1 }, { id: 'h4', side: 1 }, { id: 'h5', side: 1 }
+      ]
+    },
+    {
+      name: 'Senior Tecnico (15 Passaggi)',
+      desc: 'Percorso tecnico ad ampia distanza dalla ZdC con ripetizioni.',
+      category: 'Standard',
+      csenClass: 'Senior',
+      fieldW: 20,
+      fieldH: 40,
+      items: [
+        { id: 'z1', type: 'zdc',    x: 10,   y: 32,   angle: 0 },
+        { id: 'h1', type: 'hoop',   x: 13,   y: 27,   angle: 20 },
+        { id: 'h2', type: 'hoop',   x: 15.5, y: 21,   angle: 10 },
+        { id: 'b1', type: 'barrel', x: 15,   y: 14.5, angle: 0 },
+        { id: 'g1', type: 'gate',   x: 11,   y: 10,   angle: 0 },
+        { id: 'h3', type: 'hoop',   x: 6,    y: 8.5,  angle: -80 },
+        { id: 't1', type: 'tunnel', x: 4.5,  y: 14.5, angle: 180, length: 3.0 },
+        { id: 'b2', type: 'barrel', x: 6,    y: 21,   angle: 180 },
+        { id: 'h4', type: 'hoop',   x: 10,   y: 20,   angle: 80 },
+        { id: 'b1', type: 'barrel', x: 15,   y: 14.5, angle: 0 }
+      ],
+      sequence: [
+        { id: 'h1', side: 1 }, { id: 'h2', side: 1 }, { id: 'b1', side: 1 },
+        { id: 'g1', side: 1 }, { id: 'h3', side: 1 }, { id: 't1', side: 1 },
+        { id: 'b2', side: 1 }, { id: 'h4', side: 1 }, { id: 'b1', side: -1 }
+      ]
+    }
+  ];
+
+  function loadPreset(idx, saveHist = true) {
+    const p = PRESETS[idx];
+    if (!p) return;
+    if (saveHist) pushHistory();
+    // Deduplicate items by id
+    const seen = new Set();
+    const cleanItems = [];
+    p.items.forEach(it => {
+      if (!seen.has(it.id)) {
+        seen.add(it.id);
+        cleanItems.push(JSON.parse(JSON.stringify(it)));
+      }
+    });
+    state.category = p.category;
+    state.csenClass = p.csenClass;
+    state.fieldW = p.fieldW;
+    state.fieldH = p.fieldH;
+    state.items = cleanItems;
+    state.sequence = JSON.parse(JSON.stringify(p.sequence));
+    state.selectedId = null;
+    state.selectedStepIdx = null;
+    syncUIFromState();
+    fit2DField();
+    renderAll();
+  }
+
+  /* =========================================================
+     UNIFIED DOG PATH GEOMETRY (2D & 3D)
+     - Hoop & Tunnel: central passage along orientation axis
+     - Gate (1.20m): parallel to gate axis at 0.45m offset (Lato A / Lato B)
+     - Barrel (Ø 0.60m): short parallel segment along barrel angle at 0.65m offset (Destra / Sinistra)
+     ========================================================= */
+  function getItemById(id) {
+    return state.items.find(it => it.id === id) || null;
+  }
+
+  function getStepAnchors(item, sideChoice, prevCenter, nextCenter) {
+    const rad = deg2rad(item.angle || 0);
+    // Forward unit vector when angle=0 points UP (-Y in 2D field coords)
+    const fx = Math.sin(rad);
+    const fy = -Math.cos(rad);
+    // Right-hand perpendicular vector
+    const rx = Math.cos(rad);
+    const ry = Math.sin(rad);
+
+    const side = sideChoice === -1 ? -1 : 1;
+
+    // Determine traversal sign along item's axis so entry is closest to prevCenter and exit closest to nextCenter
+    let dirSign = 1;
+    if (prevCenter && nextCenter) {
+      const vx = nextCenter.x - prevCenter.x;
+      const vy = nextCenter.y - prevCenter.y;
+      const dot = vx * fx + vy * fy;
+      if (Math.abs(dot) > 0.05) dirSign = dot >= 0 ? 1 : -1;
+    } else if (prevCenter) {
+      const vx = item.x - prevCenter.x;
+      const vy = item.y - prevCenter.y;
+      dirSign = (vx * fx + vy * fy) >= 0 ? 1 : -1;
+    } else if (nextCenter) {
+      const vx = nextCenter.x - item.x;
+      const vy = nextCenter.y - item.y;
+      dirSign = (vx * fx + vy * fy) >= 0 ? 1 : -1;
+    }
+
+    const ax = fx * dirSign;
+    const ay = fy * dirSign;
+
+    if (item.type === 'gate') {
+      // Gate bar is along (rx, ry) of length 1.20m; dog runs PARALLEL to the gate bar!
+      // Wait: user spec: "La linea del cane deve essere parallela al gate" -> Gate bar is transverse (rx, ry),
+      // so parallel to gate bar means running along ±(rx, ry) at offset ±0.45m along (fx, fy)!
+      let barDir = 1;
+      if (prevCenter && nextCenter) {
+        const vx = nextCenter.x - prevCenter.x;
+        const vy = nextCenter.y - prevCenter.y;
+        barDir = (vx * rx + vy * ry) >= 0 ? 1 : -1;
+      } else if (prevCenter) {
+        barDir = ((item.x - prevCenter.x) * rx + (item.y - prevCenter.y) * ry) >= 0 ? 1 : -1;
+      } else if (nextCenter) {
+        barDir = ((nextCenter.x - item.x) * rx + (nextCenter.y - item.y) * ry) >= 0 ? 1 : -1;
+      }
+      const bx = rx * barDir;
+      const by = ry * barDir;
+      const offset = 0.45 * side;
+      const halfSpan = 0.58; // 1.16m total parallel pass along the 1.20m gate
+      const cx = item.x + fx * offset;
+      const cy = item.y + fy * offset;
+      return {
+        entry: { x: cx - bx * halfSpan, y: cy - by * halfSpan },
+        mid:   { x: cx, y: cy },
+        exit:  { x: cx + bx * halfSpan, y: cy + by * halfSpan },
+        tanIn: { x: bx, y: by },
+        tanOut:{ x: bx, y: by },
+        lead:  0.30
+      };
+    }
+
+    if (item.type === 'barrel') {
+      // Short parallel segment aligned with barrel orientation angle at 0.65m lateral clearance
+      const offset = 0.65 * side;
+      const halfSpan = 0.14; // short parallel line per user request
+      const cx = item.x + rx * offset;
+      const cy = item.y + ry * offset;
+      return {
+        entry: { x: cx - ax * halfSpan, y: cy - ay * halfSpan },
+        mid:   { x: cx, y: cy },
+        exit:  { x: cx + ax * halfSpan, y: cy + ay * halfSpan },
+        tanIn: { x: ax, y: ay },
+        tanOut:{ x: ax, y: ay },
+        lead:  0.22
+      };
+    }
+
+    if (item.type === 'tunnel') {
+      const halfLen = (item.length || 1.0) * 0.5;
+      return {
+        entry: { x: item.x - ax * halfLen, y: item.y - ay * halfLen },
+        mid:   { x: item.x, y: item.y },
+        exit:  { x: item.x + ax * halfLen, y: item.y + ay * halfLen },
+        tanIn: { x: ax, y: ay },
+        tanOut:{ x: ax, y: ay },
+        lead:  0.40
+      };
+    }
+
+    // Hoop (default)
+    const halfSpan = 0.18;
+    return {
+      entry: { x: item.x - ax * halfSpan, y: item.y - ay * halfSpan },
+      mid:   { x: item.x, y: item.y },
+      exit:  { x: item.x + ax * halfSpan, y: item.y + ay * halfSpan },
+      tanIn: { x: ax, y: ay },
+      tanOut:{ x: ax, y: ay },
+      lead:  0.35
+    };
+  }
+
+  function computeDogPathData() {
+    const validSteps = state.sequence
+      .map((s, idx) => ({ ...s, stepIdx: idx, item: getItemById(s.id) }))
+      .filter(s => s.item && s.item.type !== 'zdc');
+
+    if (validSteps.length === 0) return { segments: [], points: [], anchors: [] };
+
+    const anchors = validSteps.map((st, i) => {
+      const prev = i > 0 ? validSteps[i - 1].item : null;
+      const next = i < validSteps.length - 1 ? validSteps[i + 1].item : null;
+      return {
+        ...getStepAnchors(st.item, st.side, prev, next),
+        step: st
+      };
+    });
+
+    const segments = [];
+    const points = [];
+
+    for (let i = 0; i < anchors.length; i++) {
+      const cur = anchors[i];
+      if (i === 0) {
+        points.push({ x: cur.entry.x, y: cur.entry.y });
+      } else {
+        const prev = anchors[i - 1];
+        const dx = cur.entry.x - prev.exit.x;
+        const dy = cur.entry.y - prev.exit.y;
+        const dist = Math.hypot(dx, dy);
+        const h1 = Math.min(prev.lead + dist * 0.25, dist * 0.45);
+        const h2 = Math.min(cur.lead + dist * 0.25, dist * 0.45);
+        const cp1 = { x: prev.exit.x + prev.tanOut.x * h1, y: prev.exit.y + prev.tanOut.y * h1 };
+        const cp2 = { x: cur.entry.x - cur.tanIn.x * h2, y: cur.entry.y - cur.tanIn.y * h2 };
+
+        segments.push({
+          type: 'cubic',
+          p0: prev.exit,
+          cp1,
+          cp2,
+          p3: cur.entry,
+          fromItem: prev.step.item,
+          toItem: cur.step.item,
+          dist
+        });
+
+        // Sample cubic bezier for unified polyline / 3D spline
+        const steps = 14;
+        for (let k = 1; k <= steps; k++) {
+          const t = k / steps;
+          const mt = 1 - t;
+          const bx = mt*mt*mt*prev.exit.x + 3*mt*mt*t*cp1.x + 3*mt*t*t*cp2.x + t*t*t*cur.entry.x;
+          const by = mt*mt*mt*prev.exit.y + 3*mt*mt*t*cp1.y + 3*mt*t*t*cp2.y + t*t*t*cur.entry.y;
+          points.push({ x: bx, y: by });
+        }
+      }
+
+      // Straight traversal through obstacle
+      segments.push({
+        type: 'line',
+        p0: cur.entry,
+        p1: cur.exit
+      });
+      points.push({ x: cur.mid.x, y: cur.mid.y });
+      points.push({ x: cur.exit.x, y: cur.exit.y });
+    }
+
+    return { segments, points, anchors };
+  }
+
+  /* =========================================================
+     CSEN 2026 VALIDATION ENGINE
+     ========================================================= */
+  function validateCourse() {
+    const rules = CSEN_RULES[state.category][state.csenClass];
+    const errors = [];
+    const warnings = [];
+
+    const zdcList = state.items.filter(it => it.type === 'zdc');
+    if (zdcList.length === 0) {
+      errors.push('Manca la Zona di Conduzione (ZdC Ø 2.00m) sul campo.');
+    } else if (zdcList.length > 1) {
+      warnings.push('Sono presenti più ZdC: il regolamento prevede 1 sola Zona di Conduzione.');
+    }
+
+    const seqCount = state.sequence.length;
+    if (seqCount === 0) {
+      warnings.push('Nessuna sequenza impostata. Passa a "1→N" per numerare gli attrezzi.');
+    } else {
+      if (seqCount < rules.minObs) {
+        errors.push(`Passaggi insufficienti (${seqCount}): minimo ${rules.minObs} per ${state.category} ${state.csenClass}.`);
+      }
+      if (seqCount > rules.maxObs) {
+        errors.push(`Troppi passaggi (${seqCount}): massimo ${rules.maxObs} per ${state.category} ${state.csenClass}.`);
+      }
+    }
+
+    // Tunnel check for Experience
+    const hasTunnel = state.items.some(it => it.type === 'tunnel');
+    if (hasTunnel && !rules.allowTunnel) {
+      errors.push(`Il Tunnel non è ammesso nella classe ${state.csenClass}.`);
+    }
+
+    // Perimeter safety margin (>= 1.0m)
+    state.items.forEach(it => {
+      const r = EQUIP_SPECS[it.type].radius;
+      if (it.x - r < 0.95 || it.x + r > state.fieldW - 0.95 || it.y - r < 0.95 || it.y + r > state.fieldH - 0.95) {
+        errors.push(`${EQUIP_SPECS[it.type].label} troppo vicino al bordo campo (margine sicurezza ≥ 1.0m).`);
+      }
+    });
+
+    // Physical overlap check
+    for (let i = 0; i < state.items.length; i++) {
+      for (let j = i + 1; j < state.items.length; j++) {
+        const a = state.items[i];
+        const b = state.items[j];
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        const minClear = EQUIP_SPECS[a.type].radius + EQUIP_SPECS[b.type].radius + 0.25;
+        if (d < minClear) {
+          errors.push(`Sovrapposizione tra ${EQUIP_SPECS[a.type].label} e ${EQUIP_SPECS[b.type].label} (${d.toFixed(2)}m).`);
+        }
+      }
+    }
+
+    // Distance between consecutive sequence obstacles & max radius from ZdC
+    const zdc = zdcList[0] || null;
+    const legValidations = [];
+
+    for (let i = 0; i < state.sequence.length; i++) {
+      const it = getItemById(state.sequence[i].id);
+      if (!it) continue;
+
+      if (zdc) {
+        const distZdc = Math.hypot(it.x - zdc.x, it.y - zdc.y);
+        if (distZdc > rules.maxZdcRadius) {
+          errors.push(`Attrezzo #${i + 1} (${EQUIP_SPECS[it.type].label}) a ${distZdc.toFixed(1)}m dalla ZdC (max ${rules.maxZdcRadius}m).`);
+        }
+      }
+
+      if (i > 0) {
+        const prev = getItemById(state.sequence[i - 1].id);
+        if (prev) {
+          const dist = Math.hypot(it.x - prev.x, it.y - prev.y);
+          const ok = dist >= rules.minDist && dist <= rules.maxDist;
+          legValidations.push({ fromIdx: i, toIdx: i + 1, dist, ok, min: rules.minDist, max: rules.maxDist });
+          if (!ok) {
+            errors.push(`Distanza #${i}→#${i + 1} pari a ${dist.toFixed(2)}m (ammesso ${rules.minDist.toFixed(1)}–${rules.maxDist.toFixed(1)}m).`);
+          }
+        }
+      }
+    }
+
+    return { ok: errors.length === 0, errors, warnings, rules, legValidations };
+  }
+
+  /* =========================================================
+     2D SVG RENDERER & INTERACTION
+     ========================================================= */
+  const svg = document.getElementById('field-svg');
+
+  function fit2DField() {
+    pan2D = { x: 0, y: 0, zoom: 1 };
+    update2DViewBox();
+  }
+
+  function update2DViewBox() {
+    const margin = 1.6;
+    const baseW = state.fieldW + margin * 2;
+    const baseH = state.fieldH + margin * 2;
+    const w = baseW / pan2D.zoom;
+    const h = baseH / pan2D.zoom;
+    const cx = state.fieldW / 2 + pan2D.x;
+    const cy = state.fieldH / 2 + pan2D.y;
+    svg.setAttribute('viewBox', `${cx - w / 2} ${cy - h / 2} ${w} ${h}`);
+  }
+
+  function clientToField(clientX, clientY) {
+    const pt = svg.createSVGPoint();
+    pt.x = clientX;
+    pt.y = clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 10, y: 20 };
+    const res = pt.matrixTransform(ctm.inverse());
+    return { x: res.x, y: res.y };
+  }
+
+  function render2D() {
+    const val = validateCourse();
+    const pathData = computeDogPathData();
+    const W = state.fieldW;
+    const H = state.fieldH;
+
+    let out = `
+      <defs>
+        <marker id="arrow-gold" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+          <path d="M 1 1 L 9 5 L 1 9 z" fill="#FFD166"/>
+        </marker>
+      </defs>
+
+      <!-- Turf Background -->
+      <rect x="0" y="0" width="${W}" height="${H}" fill="#1B4332" stroke="#F8FAFC" stroke-width="0.14"/>
+
+      <!-- 1m Safety Perimeter -->
+      <rect x="1" y="1" width="${W - 2}" height="${H - 2}" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="0.06" stroke-dasharray="0.3 0.3"/>
+    `;
+
+    // Grid lines (1m minor, 5m major)
+    for (let x = 1; x < W; x++) {
+      const major = x % 5 === 0;
+      out += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${major ? 'rgba(255,255,255,0.22)' : '#2D6A4F'}" stroke-width="${major ? 0.06 : 0.03}"/>`;
+    }
+    for (let y = 1; y < H; y++) {
+      const major = y % 5 === 0;
+      out += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${major ? 'rgba(255,255,255,0.22)' : '#2D6A4F'}" stroke-width="${major ? 0.06 : 0.03}"/>`;
+    }
+
+    // ZdC max radius ring
+    const zdc = state.items.find(it => it.type === 'zdc');
+    if (zdc && val.rules) {
+      out += `<circle cx="${zdc.x}" cy="${zdc.y}" r="${val.rules.maxZdcRadius}" fill="none" stroke="rgba(255, 209, 102, 0.28)" stroke-width="0.08" stroke-dasharray="0.45 0.35"/>`;
+    }
+
+    // Dog Path Segments
+    pathData.segments.forEach(seg => {
+      if (seg.type === 'cubic') {
+        out += `<path d="M ${seg.p0.x.toFixed(3)} ${seg.p0.y.toFixed(3)} C ${seg.cp1.x.toFixed(3)} ${seg.cp1.y.toFixed(3)}, ${seg.cp2.x.toFixed(3)} ${seg.cp2.y.toFixed(3)}, ${seg.p3.x.toFixed(3)} ${seg.p3.y.toFixed(3)}" fill="none" stroke="#FFD166" stroke-width="0.16" stroke-linecap="round" marker-mid="url(#arrow-gold)"/>`;
+        // Midpoint arrow + distance badge
+        const mx = 0.125*seg.p0.x + 0.375*seg.cp1.x + 0.375*seg.cp2.x + 0.125*seg.p3.x;
+        const my = 0.125*seg.p0.y + 0.375*seg.cp1.y + 0.375*seg.cp2.y + 0.125*seg.p3.y;
+        const distOk = seg.dist >= val.rules.minDist && seg.dist <= val.rules.maxDist;
+        const pillColor = distOk ? '#06D6A0' : '#EF476F';
+        out += `
+          <g transform="translate(${mx.toFixed(2)}, ${my.toFixed(2)})">
+            <rect x="-0.72" y="-0.28" width="1.44" height="0.56" rx="0.22" fill="#0F172A" stroke="${pillColor}" stroke-width="0.06"/>
+            <text x="0" y="0.11" text-anchor="middle" fill="${pillColor}" font-size="0.34" font-weight="700" font-family="sans-serif">${seg.dist.toFixed(1)}m</text>
+          </g>
+        `;
+      } else {
+        out += `<line x1="${seg.p0.x.toFixed(3)}" y1="${seg.p0.y.toFixed(3)}" x2="${seg.p1.x.toFixed(3)}" y2="${seg.p1.y.toFixed(3)}" stroke="#FFD166" stroke-width="0.16" stroke-linecap="round"/>`;
+      }
+    });
+
+    // Equipment Items
+    state.items.forEach(it => {
+      const isSel = it.id === state.selectedId;
+      const seqIndices = [];
+      state.sequence.forEach((s, idx) => { if (s.id === it.id) seqIndices.push(idx + 1); });
+
+      out += `<g class="equip-node" data-id="${it.id}" transform="translate(${it.x}, ${it.y}) rotate(${it.angle || 0})">`;
+
+      if (it.type === 'hoop') {
+        out += `
+          <rect x="-0.45" y="-0.12" width="0.90" height="0.24" rx="0.08" fill="#38BDF8" stroke="#F8FAFC" stroke-width="0.05"/>
+          <polygon points="0,-0.28 -0.12,-0.12 0.12,-0.12" fill="#FFD166"/>
+        `;
+      } else if (it.type === 'gate') {
+        out += `
+          <rect x="-0.60" y="-0.09" width="1.20" height="0.18" rx="0.05" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.04"/>
+          <line x1="-0.42" y1="-0.09" x2="-0.42" y2="0.09" stroke="#38BDF8" stroke-width="0.08"/>
+          <line x1="0" y1="-0.09" x2="0" y2="0.09" stroke="#38BDF8" stroke-width="0.08"/>
+          <line x1="0.42" y1="-0.09" x2="0.42" y2="0.09" stroke="#38BDF8" stroke-width="0.08"/>
+        `;
+      } else if (it.type === 'barrel') {
+        out += `
+          <circle cx="0" cy="0" r="0.30" fill="#F97316" stroke="#F8FAFC" stroke-width="0.06"/>
+          <line x1="0" y1="-0.30" x2="0" y2="0" stroke="#0F172A" stroke-width="0.08" stroke-linecap="round"/>
+        `;
+      } else if (it.type === 'tunnel') {
+        const len = it.length || 1.0;
+        out += `
+          <rect x="-0.40" y="${-len / 2}" width="0.80" height="${len}" rx="0.18" fill="#2563EB" stroke="#F8FAFC" stroke-width="0.06"/>
+          <line x1="-0.36" y1="0" x2="0.36" y2="0" stroke="rgba(255,255,255,0.45)" stroke-width="0.05"/>
+        `;
+      } else if (it.type === 'zdc') {
+        out += `
+          <circle cx="0" cy="0" r="1.00" fill="rgba(255, 209, 102, 0.22)" stroke="#FFD166" stroke-width="0.08" stroke-dasharray="0.22 0.14"/>
+          <text x="0" y="0.14" text-anchor="middle" fill="#FFD166" font-size="0.42" font-weight="800" font-family="sans-serif">ZdC</text>
+        `;
+      }
+
+      // Selection halo & rotation handle
+      if (isSel) {
+        const handleDist = EQUIP_SPECS[it.type].radius + 0.65;
+        out += `
+          <circle cx="0" cy="0" r="${EQUIP_SPECS[it.type].radius + 0.18}" fill="none" stroke="#38BDF8" stroke-width="0.07" stroke-dasharray="0.18 0.12"/>
+          <line x1="0" y1="0" x2="0" y2="${-handleDist}" stroke="#38BDF8" stroke-width="0.06"/>
+          <circle class="rot-handle" data-id="${it.id}" cx="0" cy="${-handleDist}" r="0.32" fill="#38BDF8" stroke="#0F172A" stroke-width="0.07"/>
+        `;
+      }
+
+      out += `</g>`;
+
+      // Sequence Number Badges (upright)
+      if (seqIndices.length > 0) {
+        const label = seqIndices.join(',');
+        const badgeW = Math.max(0.62, 0.34 * label.length + 0.26);
+        out += `
+          <g transform="translate(${it.x + 0.45}, ${it.y - 0.45})" pointer-events="none">
+            <rect x="${-badgeW / 2}" y="-0.31" width="${badgeW}" height="0.62" rx="0.31" fill="#FFD166" stroke="#0F172A" stroke-width="0.07"/>
+            <text x="0" y="0.13" text-anchor="middle" fill="#0F172A" font-size="0.38" font-weight="900" font-family="sans-serif">${label}</text>
+          </g>
+        `;
+      }
+    });
+
+    svg.innerHTML = out;
+    updateContextBar();
+  }
+
+  /* =========================================================
+     2D POINTER & MULTI-TOUCH GESTURES
+     ========================================================= */
+  let activePointers = new Map();
+  let dragMode = null; // 'move' | 'rotate' | 'pan' | 'pinch'
+  let dragTargetId = null;
+  let dragStartField = null;
+  let dragStartItemPos = null;
+  let dragStartPan = null;
+  let pinchStartDist = 0;
+  let pinchStartZoom = 1;
+  let movedDuringPointer = false;
+
+  svg.addEventListener('pointerdown', (e) => {
+    svg.setPointerCapture(e.pointerId);
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    movedDuringPointer = false;
+
+    if (activePointers.size === 2) {
+      const pts = Array.from(activePointers.values());
+      pinchStartDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      pinchStartZoom = pan2D.zoom;
+      dragMode = 'pinch';
+      return;
+    }
+
+    const rotEl = e.target.closest('.rot-handle');
+    if (rotEl) {
+      dragMode = 'rotate';
+      dragTargetId = rotEl.getAttribute('data-id');
+      pushHistory();
+      return;
+    }
+
+    const eqEl = e.target.closest('.equip-node');
+    if (eqEl) {
+      const id = eqEl.getAttribute('data-id');
+      if (state.mode === 'seq') {
+        handleSequenceTap(id);
+        return;
+      }
+      state.selectedId = id;
+      syncSelectedStep();
+      const it = getItemById(id);
+      dragMode = 'move';
+      dragTargetId = id;
+      dragStartField = clientToField(e.clientX, e.clientY);
+      dragStartItemPos = { x: it.x, y: it.y };
+      render2D();
+      return;
+    }
+
+    // Background pan
+    dragMode = 'pan';
+    dragStartField = { x: e.clientX, y: e.clientY };
+    dragStartPan = { x: pan2D.x, y: pan2D.y };
+  });
+
+  svg.addEventListener('pointermove', (e) => {
+    if (!activePointers.has(e.pointerId)) return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (dragMode === 'pinch' && activePointers.size === 2) {
+      const pts = Array.from(activePointers.values());
+      const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      if (pinchStartDist > 10) {
+        pan2D.zoom = clamp(pinchStartZoom * (dist / pinchStartDist), 0.65, 4.0);
+        update2DViewBox();
+      }
+      return;
+    }
+
+    if (dragMode === 'move' && dragTargetId) {
+      const it = getItemById(dragTargetId);
+      if (!it) return;
+      const cur = clientToField(e.clientX, e.clientY);
+      const dx = cur.x - dragStartField.x;
+      const dy = cur.y - dragStartField.y;
+      if (!movedDuringPointer && Math.hypot(dx, dy) > 0.08) {
+        movedDuringPointer = true;
+        pushHistory();
+      }
+      if (movedDuringPointer) {
+        it.x = clamp(snap025(dragStartItemPos.x + dx), 1.0, state.fieldW - 1.0);
+        it.y = clamp(snap025(dragStartItemPos.y + dy), 1.0, state.fieldH - 1.0);
+        renderAll(false);
+      }
+      return;
+    }
+
+    if (dragMode === 'rotate' && dragTargetId) {
+      const it = getItemById(dragTargetId);
+      if (!it) return;
+      const cur = clientToField(e.clientX, e.clientY);
+      const rawDeg = (Math.atan2(cur.x - it.x, -(cur.y - it.y)) * 180) / Math.PI;
+      it.angle = Math.round(rawDeg / 15) * 15;
+      renderAll(false);
+      return;
+    }
+
+    if (dragMode === 'pan' && dragStartField) {
+      const rect = svg.getBoundingClientRect();
+      const dxPx = e.clientX - dragStartField.x;
+      const dyPx = e.clientY - dragStartField.y;
+      if (Math.hypot(dxPx, dyPx) > 4) movedDuringPointer = true;
+      const scale = (state.fieldH + 3.2) / (rect.height * pan2D.zoom);
+      pan2D.x = clamp(dragStartPan.x - dxPx * scale, -state.fieldW * 0.45, state.fieldW * 0.45);
+      pan2D.y = clamp(dragStartPan.y - dyPx * scale, -state.fieldH * 0.45, state.fieldH * 0.45);
+      update2DViewBox();
+    }
+  });
+
+  function endPointer(e) {
+    activePointers.delete(e.pointerId);
+    if (dragMode === 'pan' && !movedDuringPointer && activePointers.size === 0) {
+      state.selectedId = null;
+      state.selectedStepIdx = null;
+      render2D();
+    }
+    if (activePointers.size === 0) {
+      dragMode = null;
+      dragTargetId = null;
+      saveLocal();
+    }
+  }
+  svg.addEventListener('pointerup', endPointer);
+  svg.addEventListener('pointercancel', endPointer);
+
+  /* =========================================================
+     SEQUENCE & CONTEXT BAR LOGIC
+     ========================================================= */
+  function handleSequenceTap(id) {
+    const it = getItemById(id);
+    if (!it || it.type === 'zdc') {
+      showToast('La ZdC non fa parte dei passaggi del cane');
+      return;
+    }
+    pushHistory();
+    state.sequence.push({ id, side: 1 });
+    state.selectedId = id;
+    state.selectedStepIdx = state.sequence.length - 1;
+    renderAll();
+    showToast(`Aggiunto #${state.sequence.length}: ${EQUIP_SPECS[it.type].label}`);
+  }
+
+  function syncSelectedStep() {
+    if (!state.selectedId) {
+      state.selectedStepIdx = null;
+      return;
+    }
+    const indices = [];
+    state.sequence.forEach((s, idx) => { if (s.id === state.selectedId) indices.push(idx); });
+    if (indices.length === 0) {
+      state.selectedStepIdx = null;
+    } else if (!indices.includes(state.selectedStepIdx)) {
+      state.selectedStepIdx = indices[0];
+    }
+  }
+
+  function updateContextBar() {
+    const bar = document.getElementById('context-bar');
+    const it = getItemById(state.selectedId);
+    if (!it || state.view !== '2d') {
+      bar.classList.remove('visible');
+      return;
+    }
+    bar.classList.add('visible');
+    const spec = EQUIP_SPECS[it.type];
+    document.getElementById('ctx-title').textContent = `${spec.label}${it.type === 'tunnel' ? ` (${(it.length || 1).toFixed(1)}m)` : ''}`;
+    document.getElementById('ctx-sub').textContent = `X:${it.x.toFixed(1)}m Y:${it.y.toFixed(1)}m • ${it.angle || 0}°`;
+
+    const actions = document.getElementById('ctx-actions');
+    actions.innerHTML = '';
+
+    // Side toggle for Gate & Barrel
+    if (it.type === 'gate' || it.type === 'barrel') {
+      const matchingSteps = state.sequence
+        .map((s, idx) => ({ s, idx }))
+        .filter(x => x.s.id === it.id);
+
+      if (matchingSteps.length > 0) {
+        if (matchingSteps.length > 1) {
+          const stepBtn = document.createElement('button');
+          stepBtn.className = 'ctx-btn';
+          const curStep = matchingSteps.find(x => x.idx === state.selectedStepIdx) || matchingSteps[0];
+          state.selectedStepIdx = curStep.idx;
+          stepBtn.textContent = `#${curStep.idx + 1}`;
+          stepBtn.title = 'Cambia passaggio';
+          stepBtn.onclick = () => {
+            const pos = matchingSteps.findIndex(x => x.idx === state.selectedStepIdx);
+            const next = matchingSteps[(pos + 1) % matchingSteps.length];
+            state.selectedStepIdx = next.idx;
+            updateContextBar();
+          };
+          actions.appendChild(stepBtn);
+        }
+
+        const activeStep = matchingSteps.find(x => x.idx === state.selectedStepIdx) || matchingSteps[0];
+        const sideBtn = document.createElement('button');
+        sideBtn.className = 'ctx-btn primary';
+        const isPos = activeStep.s.side !== -1;
+        sideBtn.textContent = it.type === 'gate'
+          ? (isPos ? '⇄ Lato A' : '⇄ Lato B')
+          : (isPos ? '⇄ Destra' : '⇄ Sinistra');
+        sideBtn.onclick = () => {
+          pushHistory();
+          activeStep.s.side = isPos ? -1 : 1;
+          renderAll();
+        };
+        actions.appendChild(sideBtn);
+      }
+    }
+
+    // Tunnel length toggle (1m / 3m)
+    if (it.type === 'tunnel') {
+      const lenBtn = document.createElement('button');
+      lenBtn.className = 'ctx-btn primary';
+      lenBtn.textContent = (it.length || 1.0) === 1.0 ? '1m → 3m' : '3m → 1m';
+      lenBtn.onclick = () => {
+        pushHistory();
+        it.length = (it.length || 1.0) === 1.0 ? 3.0 : 1.0;
+        renderAll();
+      };
+      actions.appendChild(lenBtn);
+    }
+
+    // Rotate +45° quick button
+    const rotBtn = document.createElement('button');
+    rotBtn.className = 'ctx-btn';
+    rotBtn.textContent = '↻45°';
+    rotBtn.onclick = () => {
+      pushHistory();
+      it.angle = ((it.angle || 0) + 45) % 360;
+      renderAll();
+    };
+    actions.appendChild(rotBtn);
+
+    // Delete button
+    const delBtn = document.createElement('button');
+    delBtn.className = 'ctx-btn danger';
+    delBtn.textContent = '✕';
+    delBtn.onclick = () => {
+      pushHistory();
+      state.items = state.items.filter(x => x.id !== it.id);
+      state.sequence = state.sequence.filter(s => s.id !== it.id);
+      state.selectedId = null;
+      state.selectedStepIdx = null;
+      renderAll();
+    };
+    actions.appendChild(delBtn);
+  }
+
+  /* =========================================================
+     3D ENGINE (THREE.JS + ORBITCONTROLS + ANIMATED DOG/HANDLER)
+     ========================================================= */
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  async function ensureThreeLoaded() {
+    if (threeReady) return true;
+    if (threeLoading) return false;
+    threeLoading = true;
+
+    const threeCDNs = [
+      'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+      'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+      'https://unpkg.com/three@0.128.0/build/three.min.js'
+    ];
+    const orbitCDNs = [
+      'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
+      'https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js'
+    ];
+
+    if (!window.THREE) {
+      for (const url of threeCDNs) {
+        try { await loadScript(url); if (window.THREE) break; } catch (e) {}
+      }
+    }
+    if (window.THREE && !window.THREE.OrbitControls) {
+      for (const url of orbitCDNs) {
+        try { await loadScript(url); if (window.THREE.OrbitControls) break; } catch (e) {}
+      }
+    }
+
+    threeLoading = false;
+    if (window.THREE && window.THREE.OrbitControls) {
+      init3D();
+      threeReady = true;
+      rebuild3DScene();
+      return true;
+    }
+    showToast('Errore caricamento libreria 3D');
+    return false;
+  }
+
+  function init3D() {
+    const container = document.getElementById('view-3d');
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0B1324);
+    scene.fog = new THREE.FogExp2(0x0B1324, 0.011);
+
+    camera = new THREE.PerspectiveCamera(52, container.clientWidth / container.clientHeight, 0.1, 200);
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.shadowMap.enabled = true;
+    container.insertBefore(renderer.domElement, container.firstChild);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.maxPolarAngle = Math.PI * 0.485;
+    controls.minDistance = 2.0;
+    controls.maxDistance = 65.0;
+    controls.zoomToCursor = false;
+
+    // Lights
+    const hemi = new THREE.HemisphereLight(0xE0F2FE, 0x1B4332, 0.85);
+    scene.add(hemi);
+
+    const dir = new THREE.DirectionalLight(0xFFFFFF, 0.9);
+    dir.position.set(18, 28, 16);
+    dir.castShadow = true;
+    dir.shadow.mapSize.set(1024, 1024);
+    scene.add(dir);
+
+    fieldGroup = new THREE.Group();
+    equipGroup = new THREE.Group();
+    scene.add(fieldGroup);
+    scene.add(equipGroup);
+
+    build3DActors();
+    set3DCamera('iso');
+
+    window.addEventListener('resize', () => {
+      if (!renderer) return;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+      }
+    });
+
+    requestAnimationFrame(animate3D);
+  }
+
+  function clearGroup(grp) {
+    while (grp.children.length > 0) {
+      const obj = grp.children[0];
+      grp.remove(obj);
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) {
+        if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose());
+        else obj.material.dispose();
+      }
+    }
+  }
+
+  function build3DActors() {
+    // Articulated Border Collie Dog
+    dogGroup = new THREE.Group();
+    const blackMat = new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.6 });
+    const whiteMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.5 });
+
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.56), blackMat);
+    body.position.y = 0.40;
+    body.castShadow = true;
+    dogGroup.add(body);
+
+    const chest = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.23, 0.18), whiteMat);
+    chest.position.set(0, 0.40, 0.22);
+    dogGroup.add(chest);
+
+    const headGroup = new THREE.Group();
+    headGroup.position.set(0, 0.54, 0.32);
+    const skull = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.17, 0.20), blackMat);
+    const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.14), whiteMat);
+    muzzle.position.set(0, -0.03, 0.13);
+    const earL = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.09, 0.06), blackMat);
+    earL.position.set(-0.08, 0.10, -0.02);
+    const earR = earL.clone();
+    earR.position.x = 0.08;
+    headGroup.add(skull, muzzle, earL, earR);
+    dogGroup.add(headGroup);
+
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.28), blackMat);
+    tail.position.set(0, 0.44, -0.38);
+    tail.rotation.x = -0.35;
+    dogGroup.add(tail);
+
+    function makeLeg(x, z) {
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.30, 0.06), whiteMat);
+      leg.position.set(x, 0.18, z);
+      dogGroup.add(leg);
+      return leg;
+    }
+    const legFL = makeLeg(-0.09, 0.20);
+    const legFR = makeLeg(0.09, 0.20);
+    const legBL = makeLeg(-0.09, -0.20);
+    const legBR = makeLeg(0.09, -0.20);
+
+    dogParts = { body, headGroup, tail, legFL, legFR, legBL, legBR };
+    dogGroup.visible = false;
+    scene.add(dogGroup);
+
+    // Handler in ZdC
+    handlerGroup = new THREE.Group();
+    const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.7 });
+    const jacketMat = new THREE.MeshStandardMaterial({ color: 0x0284C7, roughness: 0.5 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xFDBA74, roughness: 0.6 });
+
+    const legs = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.14, 0.88, 12), pantsMat);
+    legs.position.y = 0.44;
+    legs.castShadow = true;
+
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.15, 0.62, 12), jacketMat);
+    torso.position.y = 1.18;
+    torso.castShadow = true;
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 14), skinMat);
+    head.position.y = 1.63;
+
+    const armR = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.52, 0.08), jacketMat);
+    armR.position.set(0.24, 1.28, 0.14);
+    armR.rotation.x = -0.75;
+
+    handlerGroup.add(legs, torso, head, armR);
+    handlerParts = { armR };
+    scene.add(handlerGroup);
+  }
+
+  function rebuild3DScene() {
+    if (!threeReady) return;
+    clearGroup(fieldGroup);
+    clearGroup(equipGroup);
+
+    const W = state.fieldW;
+    const H = state.fieldH;
+
+    // Turf plane (X: 0..W, Z: 0..H)
+    const turf = new THREE.Mesh(
+      new THREE.PlaneGeometry(W, H),
+      new THREE.MeshStandardMaterial({ color: 0x1B4332, roughness: 0.88 })
+    );
+    turf.rotation.x = -Math.PI / 2;
+    turf.position.set(W / 2, 0, H / 2);
+    turf.receiveShadow = true;
+    fieldGroup.add(turf);
+
+    // Border lines
+    const borderGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(W, 0.02, H));
+    const borderLine = new THREE.LineSegments(borderGeo, new THREE.LineBasicMaterial({ color: 0xF8FAFC }));
+    borderLine.position.set(W / 2, 0.01, H / 2);
+    fieldGroup.add(borderLine);
+
+    // Equipment 3D meshes
+    state.items.forEach(it => {
+      const g = new THREE.Group();
+      g.position.set(it.x, 0, it.y);
+      g.rotation.y = -deg2rad(it.angle || 0);
+
+      if (it.type === 'hoop') {
+        const archMat = new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.35 });
+        const baseMat = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.6 });
+        const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.55, 10), archMat);
+        postL.position.set(-0.45, 0.275, 0);
+        const postR = postL.clone();
+        postR.position.x = 0.45;
+        const topArch = new THREE.Mesh(new THREE.TorusGeometry(0.45, 0.025, 10, 24, Math.PI), archMat);
+        topArch.position.set(0, 0.55, 0);
+        const footL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.04, 0.32), baseMat);
+        footL.position.set(-0.45, 0.02, 0);
+        const footR = footL.clone();
+        footR.position.x = 0.45;
+        g.add(postL, postR, topArch, footL, footR);
+      } else if (it.type === 'gate') {
+        const frameMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 });
+        const barMat = new THREE.MeshStandardMaterial({ color: 0x38BDF8, roughness: 0.4 });
+        const postL = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.95, 10), frameMat);
+        postL.position.set(-0.60, 0.475, 0);
+        const postR = postL.clone();
+        postR.position.x = 0.60;
+        const topBar = new THREE.Mesh(new THREE.BoxGeometry(1.24, 0.05, 0.05), frameMat);
+        topBar.position.set(0, 0.95, 0);
+        const midBar = new THREE.Mesh(new THREE.BoxGeometry(1.20, 0.04, 0.04), barMat);
+        midBar.position.set(0, 0.52, 0);
+        g.add(postL, postR, topBar, midBar);
+      } else if (it.type === 'barrel') {
+        const barrelMesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.30, 0.30, 0.85, 20),
+          new THREE.MeshStandardMaterial({ color: 0xF97316, roughness: 0.45 })
+        );
+        barrelMesh.position.y = 0.425;
+        barrelMesh.castShadow = true;
+        const stripe = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.305, 0.305, 0.14, 20),
+          new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 })
+        );
+        stripe.position.y = 0.45;
+        g.add(barrelMesh, stripe);
+      } else if (it.type === 'tunnel') {
+        const len = it.length || 1.0;
+        const tun = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.40, 0.40, len, 20, 1, true, 0, Math.PI),
+          new THREE.MeshStandardMaterial({ color: 0x2563EB, roughness: 0.5, side: THREE.DoubleSide })
+        );
+        tun.rotation.z = Math.PI / 2;
+        tun.rotation.y = Math.PI / 2;
+        tun.position.y = 0.02;
+        g.add(tun);
+      } else if (it.type === 'zdc') {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.92, 1.00, 32),
+          new THREE.MeshBasicMaterial({ color: 0xFFD166, side: THREE.DoubleSide })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.y = 0.02;
+        g.add(ring);
+      }
+
+      equipGroup.add(g);
+    });
+
+    // Handler placement on ZdC
+    const zdc = state.items.find(it => it.type === 'zdc');
+    if (zdc) {
+      handlerGroup.visible = true;
+      handlerGroup.position.set(zdc.x, 0, zdc.y);
+    } else {
+      handlerGroup.visible = false;
+    }
+
+    // 3D Dog Path Tube & Simulation Spline
+    if (pathMesh3D) {
+      scene.remove(pathMesh3D);
+      pathMesh3D.geometry.dispose();
+      pathMesh3D.material.dispose();
+      pathMesh3D = null;
+    }
+
+    const pData = computeDogPathData();
+    if (pData.points.length >= 2) {
+      const vecs = pData.points.map(p => new THREE.Vector3(p.x, 0.06, p.y));
+      simCurve3D = new THREE.CatmullRomCurve3(vecs);
+      const tubeGeo = new THREE.TubeGeometry(simCurve3D, Math.max(40, vecs.length * 4), 0.045, 8, false);
+      const tubeMat = new THREE.MeshStandardMaterial({ color: 0xFFD166, emissive: 0xB45309, emissiveIntensity: 0.4 });
+      pathMesh3D = new THREE.Mesh(tubeGeo, tubeMat);
+      scene.add(pathMesh3D);
+      dogGroup.visible = true;
+      updateDogPose(simProgress);
+    } else {
+      simCurve3D = null;
+      dogGroup.visible = false;
+    }
+  }
+
+  function set3DCamera(mode) {
+    camMode3D = mode;
+    document.querySelectorAll('.hud-3d-bottom .hud-btn').forEach(b => b.classList.remove('active'));
+    const btnMap = { iso: 'btn-cam-iso', top: 'btn-cam-top', handler: 'btn-cam-handler', follow: 'btn-cam-follow' };
+    if (btnMap[mode]) document.getElementById(btnMap[mode]).classList.add('active');
+
+    if (!threeReady) return;
+    const cx = state.fieldW / 2;
+    const cz = state.fieldH / 2;
+
+    // Reset inversion by default
+    controls.rotateSpeed = 1.0;
+    controls.panSpeed = 1.0;
+
+    if (mode === 'iso') {
+      controls.target.set(cx, 0, cz);
+      camera.position.set(cx + 16, 18, cz + 22);
+    } else if (mode === 'top') {
+      controls.target.set(cx, 0, cz);
+      camera.position.set(cx, 34, cz + 0.1);
+    } else if (mode === 'handler') {
+      const zdc = state.items.find(it => it.type === 'zdc');
+      const hx = zdc ? zdc.x : cx;
+      const hz = zdc ? zdc.y : state.fieldH - 5;
+      camera.position.set(hx, 1.65, hz);
+      controls.target.set(cx, 1.1, cz - 4);
+      // Invert movement/pan & rotation in handler view per user request
+      controls.rotateSpeed = -0.85;
+      controls.panSpeed = -1.0;
+    }
+    controls.update();
+  }
+
+  function updateDogPose(t) {
+    if (!simCurve3D || !dogGroup) return;
+    const u = clamp(t, 0, 1);
+    const pos = simCurve3D.getPointAt(u);
+    const tan = simCurve3D.getTangentAt(u);
+
+    dogGroup.position.set(pos.x, 0, pos.y ? pos.z : pos.z);
+    const targetPt = new THREE.Vector3(pos.x + tan.x, 0, pos.z + tan.z);
+    dogGroup.lookAt(targetPt);
+
+    // Gallop cycle
+    const phase = u * simCurve3D.getLength() * 4.2;
+    const swing = Math.sin(phase) * 0.65;
+    dogParts.legFL.rotation.x = swing;
+    dogParts.legFR.rotation.x = swing * 0.85;
+    dogParts.legBL.rotation.x = -swing;
+    dogParts.legBR.rotation.x = -swing * 0.85;
+    dogGroup.position.y = Math.abs(Math.sin(phase)) * 0.05;
+    dogParts.tail.rotation.y = Math.sin(phase * 1.4) * 0.35;
+
+    // Handler tracks dog
+    if (handlerGroup && handlerGroup.visible) {
+      handlerGroup.lookAt(pos.x, 0, pos.z);
+      if (handlerParts) {
+        handlerParts.armR.rotation.z = Math.sin(phase * 0.5) * 0.25;
+      }
+    }
+
+    if (camMode3D === 'follow') {
+      controls.target.set(pos.x, 0.5, pos.z);
+      camera.position.set(pos.x - tan.x * 4.2, 2.3, pos.z - tan.z * 4.2);
+    }
+  }
+
+  function animate3D(now) {
+    requestAnimationFrame(animate3D);
+    const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
+    lastFrameTime = now;
+
+    if (state.view === '3d' && threeReady) {
+      if (simPlaying && simCurve3D) {
+        const len = Math.max(simCurve3D.getLength(), 1);
+        const metersPerSec = 5.2 * simSpeed;
+        simProgress += (metersPerSec * dt) / len;
+        if (simProgress >= 1) {
+          simProgress = 0;
+        }
+        updateDogPose(simProgress);
+      }
+      controls.update();
+      renderer.render(scene, camera);
+    }
+  }
+
+  /* =========================================================
+     PNG EXPORT (ONLY FIELD WITH EVENT NAME, DATE, CAT & CLASS)
+     ========================================================= */
+  function exportFieldPNG() {
+    const scale = 42; // px per meter
+    const headerH = 88;
+    const pad = 20;
+    const fieldPxW = state.fieldW * scale;
+    const fieldPxH = state.fieldH * scale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = fieldPxW + pad * 2;
+    canvas.height = fieldPxH + headerH + pad * 2;
+    const ctx = canvas.getContext('2d');
+
+    // Background frame
+    ctx.fillStyle = '#0F172A';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Header inside export
+    const evName = (state.eventName || 'Percorso Hoopers CSEN 2026').trim();
+    const evDate = state.eventDate || '';
+    ctx.fillStyle = '#F8FAFC';
+    ctx.font = 'bold 28px sans-serif';
+    ctx.fillText(evName, pad, pad + 32);
+
+    ctx.fillStyle = '#38BDF8';
+    ctx.font = 'bold 20px sans-serif';
+    const metaLine = `Categoria: ${state.category}   •   Classe: ${state.csenClass}${evDate ? '   •   Data: ' + evDate : ''}`;
+    ctx.fillText(metaLine, pad, pad + 64);
+
+    // Clone current SVG cleanly for rasterization
+    const svgClone = svg.cloneNode(true);
+    svgClone.setAttribute('viewBox', `0 0 ${state.fieldW} ${state.fieldH}`);
+    svgClone.setAttribute('width', fieldPxW);
+    svgClone.setAttribute('height', fieldPxH);
+    // Strip selection handles from export
+    svgClone.querySelectorAll('.rot-handle').forEach(el => el.remove());
+
+    const xml = new XMLSerializer().serializeToString(svgClone);
+    const svgBlob = new Blob([xml], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, pad, pad + headerH, fieldPxW, fieldPxH);
+      URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      const slug = evName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'zenhoop-campo';
+      a.download = `${slug}.png`;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      showToast('Planimetria PNG esportata');
+    };
+    img.src = url;
+  }
+
+  /* =========================================================
+     UI SYNC & DRAWERS
+     ========================================================= */
+  function syncUIFromState() {
+    document.getElementById('inp-event-name').value = state.eventName || '';
+    document.getElementById('inp-event-date').value = state.eventDate || '';
+    document.getElementById('sel-category').value = state.category;
+    document.getElementById('sel-class').value = state.csenClass;
+    document.getElementById('sel-field').value = `${state.fieldW}x${state.fieldH}`;
+
+    document.getElementById('btn-view-2d').classList.toggle('active', state.view === '2d');
+    document.getElementById('btn-view-3d').classList.toggle('active', state.view === '3d');
+    document.getElementById('btn-mode-edit').classList.toggle('active', state.mode === 'edit');
+    document.getElementById('btn-mode-seq').classList.toggle('seq-active', state.mode === 'seq');
+  }
+
+  function renderAll(save = true) {
+    const val = validateCourse();
+    const pill = document.getElementById('btn-validation');
+    pill.className = 'status-pill ' + (val.ok ? 'ok' : 'err');
+    document.getElementById('status-icon').textContent = val.ok ? '✓' : '⚠';
+    document.getElementById('status-text').textContent = val.ok ? 'Conforme' : `${val.errors.length} Errori`;
+
+    render2D();
+    if (threeReady) rebuild3DScene();
+    if (save) saveLocal();
+  }
+
+  function openDrawer(title, buildFn) {
+    document.getElementById('drawer-title').textContent = title;
+    const body = document.getElementById('drawer-body');
+    body.innerHTML = '';
+    buildFn(body);
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+  }
+
+  /* =========================================================
+     EVENT LISTENERS
+     ========================================================= */
+  document.getElementById('btn-close-drawer').onclick = closeDrawer;
+  document.getElementById('modal-backdrop').onclick = (e) => {
+    if (e.target.id === 'modal-backdrop') closeDrawer();
+  };
+
+  document.getElementById('inp-event-name').oninput = (e) => {
+    state.eventName = e.target.value;
+    saveLocal();
+  };
+  document.getElementById('inp-event-date').onchange = (e) => {
+    state.eventDate = e.target.value;
+    saveLocal();
+  };
+
+  document.getElementById('sel-category').onchange = (e) => {
+    pushHistory();
+    state.category = e.target.value;
+    renderAll();
+  };
+  document.getElementById('sel-class').onchange = (e) => {
+    pushHistory();
+    state.csenClass = e.target.value;
+    renderAll();
+  };
+  document.getElementById('sel-field').onchange = (e) => {
+    pushHistory();
+    const [w, h] = e.target.value.split('x').map(Number);
+    state.fieldW = w;
+    state.fieldH = h;
+    fit2DField();
+    renderAll();
+    if (threeReady) set3DCamera(camMode3D);
+  };
+
+  document.getElementById('btn-view-2d').onclick = () => {
+    state.view = '2d';
+    document.getElementById('view-2d').style.display = 'block';
+    document.getElementById('view-3d').style.display = 'none';
+    syncUIFromState();
+    updateContextBar();
+  };
+
+  document.getElementById('btn-view-3d').onclick = async () => {
+    state.view = '3d';
+    document.getElementById('view-2d').style.display = 'none';
+    document.getElementById('view-3d').style.display = 'block';
+    syncUIFromState();
+    updateContextBar();
+    const ok = await ensureThreeLoaded();
+    if (ok) {
+      const container = document.getElementById('view-3d');
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      rebuild3DScene();
+      set3DCamera(camMode3D);
+    }
+  };
+
+  document.getElementById('btn-mode-edit').onclick = () => {
+    state.mode = 'edit';
+    syncUIFromState();
+  };
+  document.getElementById('btn-mode-seq').onclick = () => {
+    state.mode = 'seq';
+    syncUIFromState();
+    showToast('Tocca gli attrezzi in ordine 1 → N');
+  };
+
+  // Add equipment buttons
+  document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.onclick = () => {
+      const type = btn.getAttribute('data-add');
+      pushHistory();
+      const id = uid();
+      const offset = (state.items.length % 5) * 0.6 - 1.2;
+      const item = {
+        id,
+        type,
+        x: clamp(snap025(state.fieldW / 2 + offset), 1.5, state.fieldW - 1.5),
+        y: clamp(snap025(state.fieldH / 2 + offset), 1.5, state.fieldH - 1.5),
+        angle: 0
+      };
+      if (type === 'tunnel') item.length = 1.0; // Default 1m tunnel
+      state.items.push(item);
+      state.selectedId = id;
+      state.mode = 'edit';
+      syncUIFromState();
+      renderAll();
+    };
+  });
+
+  // Zoom FAB
+  document.getElementById('btn-zoom-in').onclick = () => {
+    pan2D.zoom = clamp(pan2D.zoom * 1.25, 0.65, 4.0);
+    update2DViewBox();
+  };
+  document.getElementById('btn-zoom-out').onclick = () => {
+    pan2D.zoom = clamp(pan2D.zoom / 1.25, 0.65, 4.0);
+    update2DViewBox();
+  };
+  document.getElementById('btn-zoom-fit').onclick = fit2DField;
+
+  // Undo / Redo / PNG
+  document.getElementById('btn-undo').onclick = undo;
+  document.getElementById('btn-redo').onclick = redo;
+  document.getElementById('btn-export-png').onclick = exportFieldPNG;
+
+  // Validation & Sequence Drawer
+  document.getElementById('btn-validation').onclick = () => {
+    const val = validateCourse();
+    openDrawer(`Regolamento CSEN 2026 (${state.category} • ${state.csenClass})`, (body) => {
+      const summary = document.createElement('div');
+      summary.className = 'val-item ' + (val.ok ? 'ok' : 'err');
+      summary.innerHTML = `<strong>${val.ok ? '✓ Percorso Conforme' : '⚠ Anomalie Rilevate'}</strong><br/>Passaggi: ${state.sequence.length} (${val.rules.minObs}–${val.rules.maxObs}) • Distanze: ${val.rules.minDist}–${val.rules.maxDist}m • Raggio ZdC max: ${val.rules.maxZdcRadius}m`;
+      body.appendChild(summary);
+
+      val.errors.forEach(err => {
+        const d = document.createElement('div');
+        d.className = 'val-item err';
+        d.textContent = '• ' + err;
+        body.appendChild(d);
+      });
+      val.warnings.forEach(w => {
+        const d = document.createElement('div');
+        d.className = 'val-item warn';
+        d.textContent = '• ' + w;
+        body.appendChild(d);
+      });
+
+      // Sequence manager
+      const seqHeader = document.createElement('div');
+      seqHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-weight:700;';
+      seqHeader.innerHTML = `<span>Sequenza Passaggi (${state.sequence.length})</span>`;
+      if (state.sequence.length > 0) {
+        const clrBtn = document.createElement('button');
+        clrBtn.className = 'ctx-btn danger';
+        clrBtn.textContent = 'Svuota Sequenza';
+        clrBtn.onclick = () => {
+          pushHistory();
+          state.sequence = [];
+          closeDrawer();
+          renderAll();
+        };
+        seqHeader.appendChild(clrBtn);
+      }
+      body.appendChild(seqHeader);
+
+      state.sequence.forEach((step, idx) => {
+        const it = getItemById(step.id);
+        if (!it) return;
+        const row = document.createElement('div');
+        row.className = 'seq-row';
+        row.innerHTML = `<span><strong>#${idx + 1}</strong> ${EQUIP_SPECS[it.type].label}</span>`;
+        const btns = document.createElement('div');
+        btns.style.display = 'flex';
+        btns.style.gap = '4px';
+
+        if (it.type === 'gate' || it.type === 'barrel') {
+          const sBtn = document.createElement('button');
+          sBtn.className = 'ctx-btn primary';
+          const isPos = step.side !== -1;
+          sBtn.textContent = it.type === 'gate' ? (isPos ? 'Lato A' : 'Lato B') : (isPos ? 'Destra' : 'Sinistra');
+          sBtn.onclick = () => {
+            pushHistory();
+            step.side = isPos ? -1 : 1;
+            renderAll();
+            document.getElementById('btn-validation').click();
+          };
+          btns.appendChild(sBtn);
+        }
+
+        const delS = document.createElement('button');
+        delS.className = 'ctx-btn danger';
+        delS.textContent = '✕';
+        delS.onclick = () => {
+          pushHistory();
+          state.sequence.splice(idx, 1);
+          renderAll();
+          document.getElementById('btn-validation').click();
+        };
+        btns.appendChild(delS);
+        row.appendChild(btns);
+        body.appendChild(row);
+      });
+    });
+  };
+
+  // Presets Drawer
+  document.getElementById('btn-presets').onclick = () => {
+    openDrawer('Percorsi Preset CSEN 2026', (body) => {
+      PRESETS.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'preset-card';
+        card.innerHTML = `<strong style="color:var(--accent)">${p.name}</strong><span style="color:var(--text-muted);font-size:11.5px">${p.desc}</span>`;
+        card.onclick = () => {
+          loadPreset(idx, true);
+          closeDrawer();
+          showToast('Preset caricato');
+        };
+        body.appendChild(card);
+      });
+    });
+  };
+
+  // JSON Save / Load Drawer
+  document.getElementById('btn-io').onclick = () => {
+    openDrawer('Gestione File Progetto', (body) => {
+      const expBtn = document.createElement('button');
+      expBtn.className = 'ctx-btn primary';
+      expBtn.style.cssText = 'height:38px;justify-content:center;font-size:13px;';
+      expBtn.textContent = '⬇ Scarica Progetto (.json)';
+      expBtn.onclick = () => {
+        const blob = new Blob([cloneSnapshot()], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'zenhoop-percorso.json';
+        a.click();
+      };
+      body.appendChild(expBtn);
+
+      const impBtn = document.createElement('button');
+      impBtn.className = 'ctx-btn';
+      impBtn.style.cssText = 'height:38px;justify-content:center;font-size:13px;';
+      impBtn.textContent = '⬆ Carica Progetto (.json)';
+      impBtn.onclick = () => document.getElementById('file-import').click();
+      body.appendChild(impBtn);
+
+      const clrAllBtn = document.createElement('button');
+      clrAllBtn.className = 'ctx-btn danger';
+      clrAllBtn.style.cssText = 'height:38px;justify-content:center;font-size:13px;';
+      clrAllBtn.textContent = '🗑 Svuota Campo';
+      clrAllBtn.onclick = () => {
+        pushHistory();
+        state.items = [{ id: uid(), type: 'zdc', x: state.fieldW / 2, y: state.fieldH - 6, angle: 0 }];
+        state.sequence = [];
+        state.selectedId = null;
+        closeDrawer();
+        renderAll();
+      };
+      body.appendChild(clrAllBtn);
+    });
+  };
+
+  document.getElementById('file-import').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (data && Array.isArray(data.items)) {
+          pushHistory();
+          Object.assign(state, data);
+          state.selectedId = null;
+          syncUIFromState();
+          fit2DField();
+          renderAll();
+          closeDrawer();
+          showToast('Progetto caricato');
+        }
+      } catch (err) {
+        showToast('File JSON non valido');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  // 3D HUD Controls
+  document.getElementById('btn-3d-play').onclick = () => {
+    simPlaying = !simPlaying;
+    const btn = document.getElementById('btn-3d-play');
+    btn.textContent = simPlaying ? '⏸ Pausa' : '▶ Avvia Corsa';
+    btn.classList.toggle('play-active', simPlaying);
+  };
+  document.getElementById('btn-3d-reset-run').onclick = () => {
+    simProgress = 0;
+    updateDogPose(0);
+  };
+  document.getElementById('btn-3d-speed').onclick = (e) => {
+    const speeds = [0.75, 1.0, 1.5];
+    const next = speeds[(speeds.indexOf(simSpeed) + 1) % speeds.length];
+    simSpeed = next;
+    e.target.textContent = `${next.toFixed(next === 1 ? 1 : 2)}x`;
+  };
+
+  document.getElementById('btn-cam-iso').onclick = () => set3DCamera('iso');
+  document.getElementById('btn-cam-top').onclick = () => set3DCamera('top');
+  document.getElementById('btn-cam-handler').onclick = () => set3DCamera('handler');
+  document.getElementById('btn-cam-follow').onclick = () => set3DCamera('follow');
+
+  /* =========================================================
+     BOOT
+     ========================================================= */
+  if (!loadLocal()) {
+    loadPreset(0, false);
+  } else {
+    syncUIFromState();
+    fit2DField();
+    renderAll(false);
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,3219 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22ZenHoop%20CSEN%202026%22%2C%22short_name%22%3A%22ZenHoop%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230F172A%22%2C%22theme_color%22%3A%22%230F172A%22%7D" />
+  <title>ZenHoop — Hoopers Designer CSEN 2026</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      background-color: #0F172A;
+      color: #F8FAFC;
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    input {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    svg#field-svg {
+      touch-action: none;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    #three-container canvas {
+      touch-action: none;
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-[100dvh] w-full bg-[#0F172A] text-slate-100 overflow-hidden">
+
+  <!-- HEADER SUPERIORE: Nessuna scritta/nome app a sinistra; Badge Conformità + 5 Pulsanti Icona 32x32px -->
+  <header class="shrink-0 bg-[#0F172A] border-b border-slate-800 px-2 py-1.5 z-30">
+    <div class="flex items-center justify-between gap-2">
+      <!-- Stato Live Regolamento CSEN 2026 -->
+      <div class="flex items-center min-w-0">
+        <button id="btn-status-pill" type="button" class="h-8 px-3 rounded-xl text-[11px] font-extrabold flex items-center gap-1.5 truncate transition-colors bg-[#06D6A0]/20 text-[#06D6A0] border border-[#06D6A0]/40 active:scale-95">
+          <span class="w-2 h-2 rounded-full bg-current shrink-0"></span>
+          <span id="status-pill-text">✓ Conforme</span>
+        </button>
+      </div>
+
+      <!-- 5 Pulsanti Azione Uniformi 32x32px -->
+      <div class="flex items-center gap-1 shrink-0 bg-[#1E293B] p-0.5 rounded-xl border border-slate-800">
+        <button id="btn-undo" type="button" title="Annulla" aria-label="Annulla" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-slate-200 border border-slate-700/80 disabled:opacity-35">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+        </button>
+        <button id="btn-redo" type="button" title="Ripristina" aria-label="Ripristina" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-slate-200 border border-slate-700/80 disabled:opacity-35">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+        </button>
+
+        <button id="btn-open-presets" type="button" title="Percorsi Preset CSEN 2026" aria-label="Percorsi Preset" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-sky-400 border border-slate-700/80">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+
+        <button id="btn-export-png" type="button" title="Esporta Planimetria Campo PNG" aria-label="Esporta PNG" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-amber-400 border border-slate-700/80">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+
+        <button id="btn-io-menu" type="button" title="Salva / Carica JSON" aria-label="Gestione JSON" class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-slate-200 border border-slate-700/80">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECONDA BARRA REGOLAMENTARE: Dati Evento, Taglia, Classe, Campo, Vista 2D/3D, Modalità Sposta/1->N -->
+  <nav class="shrink-0 bg-[#1E293B] border-b border-slate-800 px-2 py-1.5 space-y-1.5 z-20">
+    <!-- Riga 1: Campi Compatti Nome Evento & Data Evento -->
+    <div class="grid grid-cols-12 gap-1.5">
+      <input id="top-event-name" type="text" placeholder="Nome Evento / Gara..." aria-label="Nome Evento" class="col-span-7 h-7 bg-[#0F172A] text-slate-100 placeholder-slate-500 text-[11px] font-semibold px-2 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400" />
+      <input id="top-event-date" type="date" aria-label="Data Evento" class="col-span-5 h-7 bg-[#0F172A] text-slate-100 text-[11px] font-mono font-semibold px-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400" />
+    </div>
+
+    <!-- Riga 2: Categoria, Classe, Dimensioni Campo + Switch 2D/3D e Sposta/1->N -->
+    <div class="flex flex-wrap items-center justify-between gap-1.5">
+      <div class="grid grid-cols-3 gap-1 flex-1 min-w-[195px]">
+        <select id="select-category" aria-label="Categoria Taglia Cane" class="h-8 w-full bg-[#0F172A] text-slate-100 text-[11px] font-semibold px-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400 truncate">
+          <option value="small">Small &lt;43cm</option>
+          <option value="standard" selected>Std ≥43cm</option>
+        </select>
+
+        <select id="select-class" aria-label="Classe CSEN 2026" class="h-8 w-full bg-[#0F172A] text-slate-100 text-[11px] font-semibold px-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400 truncate">
+          <option value="experience">Experience</option>
+          <option value="avviamento" selected>Avviam.</option>
+          <option value="junior">Junior</option>
+          <option value="senior">Senior</option>
+          <option value="elite">Elite</option>
+        </select>
+
+        <select id="select-field-size" aria-label="Dimensioni Campo" class="h-8 w-full bg-[#0F172A] text-slate-100 text-[11px] font-semibold px-1.5 rounded-lg border border-slate-700 focus:outline-none focus:border-amber-400 truncate">
+          <option value="20x40" selected>20×40m</option>
+          <option value="18x36">18×36m</option>
+          <option value="15x30">15×30m</option>
+        </select>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+        <!-- Switch Vista: esclusivamente '2D' e '3D' -->
+        <div class="inline-flex h-8 rounded-lg bg-[#0F172A] p-0.5 border border-slate-700">
+          <button id="btn-view-2d" type="button" class="px-2.5 rounded-md text-[11px] font-extrabold transition-colors bg-amber-400 text-slate-950 flex items-center justify-center">2D</button>
+          <button id="btn-view-3d" type="button" class="px-2.5 rounded-md text-[11px] font-extrabold transition-colors text-slate-300 hover:text-white flex items-center justify-center">3D</button>
+        </div>
+
+        <!-- Toggle Modalità: 'Sposta' e '1→N' -->
+        <div id="mode-toggle-group" class="inline-flex h-8 rounded-lg bg-[#0F172A] p-0.5 border border-slate-700">
+          <button id="btn-mode-move" type="button" class="px-2 rounded-md text-[11px] font-bold transition-colors bg-sky-500 text-slate-950 flex items-center justify-center">Sposta</button>
+          <button id="btn-mode-seq" type="button" class="px-2 rounded-md text-[11px] font-bold transition-colors text-slate-300 hover:text-white flex items-center justify-center">1→N</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- WORKSPACE CENTRALE -->
+  <main class="relative flex-1 w-full overflow-hidden bg-[#0F172A]">
+
+    <!-- VISTA 2D SVG -->
+    <div id="view-2d-container" class="relative w-full h-full flex items-center justify-center overflow-hidden">
+      <svg id="field-svg" xmlns="http://www.w3.org/2000/svg">
+        <g id="viewport-group">
+          <g id="layer-field"></g>
+          <g id="layer-path"></g>
+          <g id="layer-obstacles"></g>
+          <g id="layer-distances"></g>
+          <g id="layer-selection"></g>
+        </g>
+      </svg>
+
+      <!-- Controlli Zoom Rapidi 2D (+ / - / Fit) + Suggerimento Modalità -->
+      <div class="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between gap-1.5 pointer-events-none z-10">
+        <div class="flex items-center gap-1 pointer-events-auto bg-[#1E293B]/90 backdrop-blur border border-slate-700 p-1 rounded-xl shadow-lg">
+          <button id="btn-zoom-in" type="button" title="Zoom Avanti" aria-label="Zoom Avanti" class="w-7 h-7 rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-slate-100 font-extrabold text-sm flex items-center justify-center">+</button>
+          <button id="btn-zoom-out" type="button" title="Zoom Indietro" aria-label="Zoom Indietro" class="w-7 h-7 rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-slate-100 font-extrabold text-sm flex items-center justify-center">−</button>
+          <button id="btn-zoom-fit" type="button" title="Adatta Campo" aria-label="Adatta Campo" class="h-7 px-2 rounded-lg bg-[#0F172A] hover:bg-slate-800 active:scale-95 text-amber-400 font-bold text-[11px] flex items-center justify-center">Fit</button>
+        </div>
+
+        <div id="hud-mode-hint" class="px-2.5 py-1.5 rounded-xl bg-[#0F172A]/85 backdrop-blur border border-slate-800 text-[11px] font-medium text-slate-300 shadow truncate">
+          Trascina • Pizzica per zoom
+        </div>
+      </div>
+
+      <!-- BARRA CONTESTUALE RAPIDA (Attrezzo selezionato in 2D) -->
+      <div id="contextual-bar" class="hidden absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 bg-[#1E293B]/95 backdrop-blur-md border border-slate-600 rounded-2xl px-2 py-1.5 shadow-2xl flex items-center gap-1 max-w-[96vw] overflow-x-auto no-scrollbar">
+        <span id="ctx-item-label" class="text-[11px] font-extrabold text-amber-400 px-1.5 shrink-0 uppercase">Hoop</span>
+        <div class="h-4 w-px bg-slate-700 shrink-0"></div>
+
+        <button id="btn-ctx-rot-ccw" type="button" class="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-slate-100 shrink-0">-15°</button>
+        <button id="btn-ctx-rot-cw" type="button" class="px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-bold text-slate-100 shrink-0">+15°</button>
+
+        <!-- Selettore Step per passaggi multipli su Gate/Barrel -->
+        <select id="select-ctx-step" aria-label="Seleziona passaggio" class="hidden h-8 bg-[#0F172A] text-amber-300 text-[11px] font-mono font-bold px-1.5 rounded-xl border border-amber-400/40 shrink-0 focus:outline-none"></select>
+
+        <!-- Pulsante Lato Passaggio (Gate Lato A/B e Barrel Destra/Sinistra) -->
+        <button id="btn-ctx-side" type="button" class="hidden px-2.5 py-1.5 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/50 active:scale-95 text-xs font-extrabold text-amber-300 shrink-0">
+          ⇄ Lato A
+        </button>
+
+        <!-- Toggle Lunghezza Tunnel (1.0m / 3.0m) -->
+        <button id="btn-ctx-length" type="button" class="hidden px-2.5 py-1.5 rounded-xl bg-sky-400/20 hover:bg-sky-400/30 border border-sky-400/50 active:scale-95 text-xs font-extrabold text-sky-300 shrink-0">
+          1.0m → 3.0m
+        </button>
+
+        <button id="btn-ctx-dup" type="button" title="Duplica" class="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-slate-200 shrink-0">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button id="btn-ctx-del" type="button" title="Elimina" class="p-1.5 rounded-xl bg-[#EF476F]/20 hover:bg-[#EF476F]/30 border border-[#EF476F]/40 active:scale-95 text-[#EF476F] shrink-0">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- VISTA 3D THREE.JS CON ANIMAZIONE CANE E CONDUTTORE -->
+    <div id="view-3d-container" class="hidden relative w-full h-full bg-[#0F172A]">
+      <div id="three-container" class="w-full h-full"></div>
+
+      <!-- Barra Superiore Animazione 3D (Play/Pausa, Riavvia, Velocità) -->
+      <div class="absolute top-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#1E293B]/95 backdrop-blur-md border border-slate-700 p-1 rounded-2xl shadow-2xl max-w-[96vw]">
+        <button id="btn-anim-play" type="button" class="px-3 py-1.5 rounded-xl bg-[#06D6A0] text-slate-950 text-xs font-extrabold flex items-center gap-1 shrink-0 active:scale-95">
+          <span id="anim-play-icon">▶</span>
+          <span id="anim-play-label">Avvia Corsa</span>
+        </button>
+        <button id="btn-anim-restart" type="button" title="Riavvia dall'inizio" class="px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold shrink-0 active:scale-95">
+          ↺ Riavvia
+        </button>
+        <button id="btn-anim-speed" type="button" title="Velocità corsa" class="px-2.5 py-1.5 rounded-xl bg-[#0F172A] border border-slate-700 text-amber-300 font-mono text-xs font-extrabold shrink-0 active:scale-95">
+          1.0x
+        </button>
+      </div>
+
+      <!-- Preset Camera 3D (senza pulsante 1 Dito) -->
+      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-[#1E293B]/95 backdrop-blur-md border border-slate-700 p-1.5 rounded-2xl shadow-2xl max-w-[96vw] overflow-x-auto no-scrollbar">
+        <button id="btn-cam-iso" type="button" class="px-2.5 py-2 rounded-xl bg-amber-400 text-slate-950 text-xs font-extrabold shrink-0 active:scale-95">
+          Vista Isometrica
+        </button>
+        <button id="btn-cam-top" type="button" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-bold shrink-0 active:scale-95">
+          Vista Dall'Alto
+        </button>
+        <button id="btn-cam-handler" type="button" class="px-2.5 py-2 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-300 text-xs font-bold shrink-0 active:scale-95">
+          Vista Conduttore (ZdC)
+        </button>
+        <button id="btn-cam-dog" type="button" class="px-2.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/40 text-emerald-300 text-xs font-bold shrink-0 active:scale-95">
+          Segui Cane
+        </button>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICHE -->
+    <div id="toast-msg" class="pointer-events-none opacity-0 transition-opacity duration-200 fixed top-28 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-amber-400/50 text-amber-200 text-xs font-semibold px-3.5 py-2 rounded-xl shadow-2xl text-center max-w-[90vw]">
+    </div>
+  </main>
+
+  <!-- TOOLBAR ATTREZZI INFERIORE (5 pulsanti equamente spaziati in vista 2D) -->
+  <section id="bottom-toolbar" class="shrink-0 bg-[#1E293B] border-t border-slate-800 px-2 py-1.5 z-20">
+    <div class="grid grid-cols-5 gap-1.5 max-w-2xl mx-auto">
+      <button type="button" data-add="hoop" class="add-equip-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl bg-[#0F172A] hover:bg-slate-800 active:scale-95 border border-slate-700/90 transition-transform">
+        <div class="w-7 h-6 flex items-center justify-center mb-0.5">
+          <svg class="w-6 h-6 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <path d="M5 19V11a7 7 0 0 1 14 0v8" />
+            <line x1="3" y1="19" x2="7" y2="19" stroke="#F8FAFC" />
+            <line x1="17" y1="19" x2="21" y2="19" stroke="#F8FAFC" />
+          </svg>
+        </div>
+        <span class="text-[11px] font-bold text-slate-100 leading-tight">Hoop</span>
+        <span class="text-[9px] font-mono text-slate-400 leading-tight">0.90m</span>
+      </button>
+
+      <button type="button" data-add="gate" class="add-equip-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl bg-[#0F172A] hover:bg-slate-800 active:scale-95 border border-slate-700/90 transition-transform">
+        <div class="w-7 h-6 flex items-center justify-center mb-0.5">
+          <svg class="w-6 h-6 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="4" y1="6" x2="4" y2="19" />
+            <line x1="20" y1="6" x2="20" y2="19" />
+            <line x1="4" y1="8" x2="20" y2="8" />
+            <line x1="4" y1="14" x2="20" y2="14" />
+            <line x1="9" y1="8" x2="9" y2="14" stroke-opacity="0.65" />
+            <line x1="15" y1="8" x2="15" y2="14" stroke-opacity="0.65" />
+          </svg>
+        </div>
+        <span class="text-[11px] font-bold text-slate-100 leading-tight">Gate</span>
+        <span class="text-[9px] font-mono text-slate-400 leading-tight">1.20m</span>
+      </button>
+
+      <button type="button" data-add="barrel" class="add-equip-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl bg-[#0F172A] hover:bg-slate-800 active:scale-95 border border-slate-700/90 transition-transform">
+        <div class="w-7 h-6 flex items-center justify-center mb-0.5">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+            <rect x="6" y="4" width="12" height="16" rx="2.5" fill="#F43F5E" stroke="#F8FAFC" stroke-width="1.8" />
+            <line x1="6" y1="9.5" x2="18" y2="9.5" stroke="#F8FAFC" stroke-width="1.8" />
+            <line x1="6" y1="14.5" x2="18" y2="14.5" stroke="#F8FAFC" stroke-width="1.8" />
+          </svg>
+        </div>
+        <span class="text-[11px] font-bold text-slate-100 leading-tight">Barrel</span>
+        <span class="text-[9px] font-mono text-slate-400 leading-tight">Ø0.60m</span>
+      </button>
+
+      <button type="button" data-add="tunnel" class="add-equip-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl bg-[#0F172A] hover:bg-slate-800 active:scale-95 border border-slate-700/90 transition-transform">
+        <div class="w-7 h-6 flex items-center justify-center mb-0.5">
+          <svg class="w-6 h-6 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+            <ellipse cx="8" cy="12" rx="4" ry="6" fill="rgba(52, 211, 153, 0.25)" />
+            <path d="M8 6h8a4 6 0 0 1 0 12H8" />
+          </svg>
+        </div>
+        <span class="text-[11px] font-bold text-slate-100 leading-tight">Tunnel</span>
+        <span class="text-[9px] font-mono text-slate-400 leading-tight">1.0m</span>
+      </button>
+
+      <button type="button" data-add="zdc" class="add-equip-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl bg-[#0F172A] hover:bg-slate-800 active:scale-95 border border-slate-700/90 transition-transform">
+        <div class="w-7 h-6 flex items-center justify-center mb-0.5">
+          <svg class="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="8" fill="rgba(192, 132, 252, 0.2)" stroke="currentColor" stroke-width="2" stroke-dasharray="3 2" />
+            <circle cx="12" cy="12" r="2.2" fill="currentColor" />
+          </svg>
+        </div>
+        <span class="text-[11px] font-bold text-purple-300 leading-tight">ZdC</span>
+        <span class="text-[9px] font-mono text-slate-400 leading-tight">Ø2.00m</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- BOTTOM SHEET ESPANDIBILE: Validazione Regolamentare CSEN 2026 & Sequenza -->
+  <section id="bottom-drawer" class="shrink-0 bg-[#0F172A] border-t border-slate-700 z-30 flex flex-col">
+    <button id="btn-toggle-drawer" type="button" class="w-full px-3 py-2 flex items-center justify-between bg-[#1E293B]/95 hover:bg-[#1E293B] text-left">
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="drawer-badge-dot" class="w-2.5 h-2.5 rounded-full bg-[#06D6A0] shrink-0"></span>
+        <span class="text-xs font-extrabold text-slate-100 truncate">Regolamento CSEN 2026 &amp; Sequenza</span>
+        <span id="drawer-seq-count" class="text-[11px] font-mono bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded-md shrink-0">0 passaggi</span>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <span id="drawer-chevron-label" class="text-[11px] font-semibold text-slate-400">Espandi</span>
+        <svg id="drawer-chevron" class="w-4 h-4 text-slate-300 transition-transform duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+      </div>
+    </button>
+
+    <div id="drawer-body" class="hidden max-h-[46dvh] overflow-y-auto custom-scroll p-3 space-y-3 bg-[#0F172A]">
+      <!-- Riepilogo Parametri Classe/Categoria -->
+      <div class="bg-[#1E293B] rounded-xl p-2.5 border border-slate-700/80">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-extrabold text-amber-400 uppercase tracking-wider">Parametri CSEN 2026</span>
+          <span id="rule-summary-tag" class="text-[11px] font-mono text-slate-300">Standard • Avviamento</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 text-center text-[11px]">
+          <div class="bg-[#0F172A] rounded-lg p-1.5 border border-slate-800">
+            <div class="text-slate-400 text-[10px]">Passaggi</div>
+            <div id="spec-passes" class="font-bold text-slate-100">10 - 15</div>
+          </div>
+          <div class="bg-[#0F172A] rounded-lg p-1.5 border border-slate-800">
+            <div class="text-slate-400 text-[10px]">Distanze</div>
+            <div id="spec-dist" class="font-bold text-slate-100">5.0 - 8.0m</div>
+          </div>
+          <div class="bg-[#0F172A] rounded-lg p-1.5 border border-slate-800">
+            <div class="text-slate-400 text-[10px]">Max da ZdC</div>
+            <div id="spec-zdc" class="font-bold text-slate-100">≤ 12.0m</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verifiche Regolamentari Clickabili -->
+      <div>
+        <h3 class="text-xs font-extrabold text-slate-200 mb-1.5 flex items-center justify-between">
+          <span>Verifiche Regolamentari (tocca per evidenziare)</span>
+          <span id="validation-score-label" class="text-[11px] font-bold text-[#06D6A0]">Conforme</span>
+        </h3>
+        <ul id="validation-list" class="space-y-1.5 text-xs"></ul>
+      </div>
+
+      <!-- Lista Interattiva Sequenza -->
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <h3 class="text-xs font-extrabold text-slate-200">Ordine Sequenza &amp; Lati Passaggio</h3>
+          <button id="btn-clear-seq" type="button" class="text-[11px] font-semibold text-rose-400 hover:underline">Azzera Sequenza</button>
+        </div>
+        <div id="sequence-list" class="space-y-1.5"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODAL: Preset Percorsi CSEN 2026 -->
+  <div id="preset-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#1E293B] border border-slate-700 rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-extrabold text-amber-400">ZenHoop — Percorsi Preset CSEN 2026</h2>
+        <button id="btn-close-presets" type="button" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+      <div class="space-y-2">
+        <button type="button" data-preset="experience" class="preset-choice-btn w-full text-left p-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 border border-slate-700 active:scale-[0.99] transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-100">1. Experience — Linea &amp; Giro Base</span>
+            <span class="text-[10px] font-mono bg-[#06D6A0]/20 text-[#06D6A0] px-2 py-0.5 rounded-full">6 passaggi</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Percorso lineare senza passaggi ripetuti, distanze 4.0–6.0m, raggio ZdC ≤ 8m.</p>
+        </button>
+
+        <button type="button" data-preset="avviamento" class="preset-choice-btn w-full text-left p-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 border border-slate-700 active:scale-[0.99] transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-100">2. Avviamento — Flow &amp; Cambio Lato Gate</span>
+            <span class="text-[10px] font-mono bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">10 passaggi</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Gate 1.20m con lato A/B, aggiramento Barrel e Tunnel 1m entro 12m dalla ZdC.</p>
+        </button>
+
+        <button type="button" data-preset="senior" class="preset-choice-btn w-full text-left p-3 rounded-xl bg-[#0F172A] hover:bg-slate-800 border border-slate-700 active:scale-[0.99] transition">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-extrabold text-slate-100">3. Senior — Tecnico Multi-Passaggio</span>
+            <span class="text-[10px] font-mono bg-sky-400/20 text-sky-300 px-2 py-0.5 rounded-full">15 passaggi</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Conduzione a distanza fino a 20m dalla ZdC con doppi passaggi sugli attrezzi e Tunnel 3m.</p>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Gestione File JSON & Svuota Campo -->
+  <div id="io-modal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-[#1E293B] border border-slate-700 rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-extrabold text-slate-100">ZenHoop — Gestione Progetto &amp; File</h2>
+        <button id="btn-close-io" type="button" class="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center">✕</button>
+      </div>
+
+      <div class="space-y-2 bg-[#0F172A] p-2.5 rounded-xl border border-slate-800">
+        <div>
+          <label for="modal-event-name" class="block text-[10px] font-semibold text-slate-400 mb-0.5">Nome Evento</label>
+          <input id="modal-event-name" type="text" placeholder="Es. Gara Nazionale CSEN" class="w-full h-8 px-2.5 rounded-lg bg-[#1E293B] border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-400" />
+        </div>
+        <div>
+          <label for="modal-event-date" class="block text-[10px] font-semibold text-slate-400 mb-0.5">Data Evento</label>
+          <input id="modal-event-date" type="date" class="w-full h-8 px-2.5 rounded-lg bg-[#1E293B] border border-slate-700 text-xs text-slate-100 focus:outline-none focus:border-amber-400" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button id="btn-download-json" type="button" class="py-2.5 px-3 rounded-xl bg-amber-400 text-slate-950 font-extrabold text-xs flex items-center justify-center gap-1.5 active:scale-95">
+          <span>Esporta JSON</span>
+        </button>
+        <label class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-100 font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95">
+          <span>Importa JSON</span>
+          <input id="input-load-json" type="file" accept=".json,application/json" class="hidden" />
+        </label>
+      </div>
+
+      <button id="btn-clear-field" type="button" class="w-full py-2.5 px-3 rounded-xl bg-[#EF476F]/20 hover:bg-[#EF476F]/30 border border-[#EF476F]/50 text-[#EF476F] font-extrabold text-xs active:scale-95">
+        Svuota Tutto il Campo
+      </button>
+    </div>
+  </div>
+
+  <!-- CARICAMENTO RIDONDANTE THREE.JS r128 + ORBITCONTROLS (COMPATIBILE CON QUALSIASI HOSTING ESTERNO) -->
+  <script>
+    (function loadThreeWithFallback() {
+      const threeCdns = [
+        'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+        'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+        'https://unpkg.com/three@0.128.0/build/three.min.js'
+      ];
+      const controlsCdns = [
+        'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js',
+        'https://unpkg.com/three@0.128.0/examples/js/controls/OrbitControls.js'
+      ];
+
+      function loadScriptSequential(urls, idx, onSuccess) {
+        if (idx >= urls.length) return;
+        const s = document.createElement('script');
+        s.src = urls[idx];
+        s.async = false;
+        s.onload = () => onSuccess();
+        s.onerror = () => loadScriptSequential(urls, idx + 1, onSuccess);
+        document.head.appendChild(s);
+      }
+
+      loadScriptSequential(threeCdns, 0, () => {
+        loadScriptSequential(controlsCdns, 0, () => {
+          if (window.THREE && window.THREE.OrbitControls) {
+            window.THREE_MOD = { THREE: window.THREE, OrbitControls: window.THREE.OrbitControls };
+            window.dispatchEvent(new Event('three-ready'));
+          }
+        });
+      });
+    })();
+  </script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* =====================================================================
+       * 1. PARAMETRI REGOLAMENTARI HOOPERS CSEN 2026
+       * Categorie Taglia: Small (< 43 cm) e Standard (>= 43 cm)
+       * Classi: Experience, Avviamento, Junior, Senior, Elite
+       * ===================================================================== */
+      const CSEN_RULES = {
+        experience: {
+          label: 'Experience',
+          minPasses: 6,
+          maxPasses: 10,
+          dist: {
+            small: { min: 3.0, max: 5.0 },
+            standard: { min: 4.0, max: 6.0 }
+          },
+          maxZdcRadius: 8.0,
+          allowMultiPass: false
+        },
+        avviamento: {
+          label: 'Avviamento',
+          minPasses: 10,
+          maxPasses: 15,
+          dist: {
+            small: { min: 4.0, max: 7.0 },
+            standard: { min: 5.0, max: 8.0 }
+          },
+          maxZdcRadius: 12.0,
+          allowMultiPass: true
+        },
+        junior: {
+          label: 'Junior',
+          minPasses: 12,
+          maxPasses: 18,
+          dist: {
+            small: { min: 5.0, max: 8.0 },
+            standard: { min: 6.0, max: 10.0 }
+          },
+          maxZdcRadius: 16.0,
+          allowMultiPass: true
+        },
+        senior: {
+          label: 'Senior',
+          minPasses: 15,
+          maxPasses: 22,
+          dist: {
+            small: { min: 5.0, max: 10.0 },
+            standard: { min: 7.0, max: 12.0 }
+          },
+          maxZdcRadius: 20.0,
+          allowMultiPass: true
+        },
+        elite: {
+          label: 'Elite',
+          minPasses: 18,
+          maxPasses: 25,
+          dist: {
+            small: { min: 6.0, max: 12.0 },
+            standard: { min: 8.0, max: 15.0 }
+          },
+          maxZdcRadius: 25.0,
+          allowMultiPass: true
+        }
+      };
+
+      const EQUIP_SPECS = {
+        hoop: { name: 'Hoop', width: 0.90, depth: 0.25, radius: 0.45, color: '#FBBF24' },
+        gate: { name: 'Gate', width: 1.20, depth: 0.25, radius: 0.65, color: '#38BDF8' },
+        barrel: { name: 'Barrel', width: 0.60, depth: 0.60, radius: 0.30, color: '#F43F5E' },
+        tunnel: { name: 'Tunnel', width: 0.80, depth: 1.00, radius: 0.50, color: '#34D399' },
+        zdc: { name: 'ZdC', width: 2.00, depth: 2.00, radius: 1.00, color: '#C084FC' }
+      };
+
+      const STORAGE_KEY = 'zenhoop_csen_2026_state_v2';
+
+      /* =====================================================================
+       * 2. STATO APPLICAZIONE & CRONOLOGIA UNDO/REDO
+       * ===================================================================== */
+      let state = {
+        eventName: '',
+        eventDate: new Date().toISOString().slice(0, 10),
+        category: 'standard',
+        csenClass: 'avviamento',
+        fieldW: 20,
+        fieldH: 40,
+        view: '2d',
+        mode: 'move',
+        selectedId: null,
+        selectedStepIndex: null,
+        obstacles: [],
+        sequence: [] // Array di { id: string, side: 1 | -1 }
+      };
+
+      const historyStack = [];
+      const redoStack = [];
+
+      function generateId(prefix = 'obs') {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+      }
+
+      function cloneStateSnapshot() {
+        return JSON.stringify({
+          eventName: state.eventName,
+          eventDate: state.eventDate,
+          category: state.category,
+          csenClass: state.csenClass,
+          fieldW: state.fieldW,
+          fieldH: state.fieldH,
+          obstacles: state.obstacles,
+          sequence: state.sequence
+        });
+      }
+
+      function pushHistory() {
+        historyStack.push(cloneStateSnapshot());
+        if (historyStack.length > 40) historyStack.shift();
+        redoStack.length = 0;
+        updateUndoRedoButtons();
+      }
+
+      function undo() {
+        if (historyStack.length === 0) return;
+        redoStack.push(cloneStateSnapshot());
+        const prev = JSON.parse(historyStack.pop());
+        applySnapshot(prev);
+        updateUndoRedoButtons();
+        showToast('Azione annullata');
+      }
+
+      function redo() {
+        if (redoStack.length === 0) return;
+        historyStack.push(cloneStateSnapshot());
+        const next = JSON.parse(redoStack.pop());
+        applySnapshot(next);
+        updateUndoRedoButtons();
+        showToast('Azione ripristinata');
+      }
+
+      function applySnapshot(snap) {
+        state.eventName = typeof snap.eventName === 'string' ? snap.eventName : '';
+        state.eventDate = typeof snap.eventDate === 'string' ? snap.eventDate : new Date().toISOString().slice(0, 10);
+        state.category = snap.category || 'standard';
+        state.csenClass = CSEN_RULES[snap.csenClass] ? snap.csenClass : 'avviamento';
+        state.fieldW = snap.fieldW || 20;
+        state.fieldH = snap.fieldH || 40;
+        state.obstacles = Array.isArray(snap.obstacles) ? snap.obstacles : [];
+        state.sequence = normalizeSequence(snap.sequence || []);
+        if (state.selectedId && !state.obstacles.some(o => o.id === state.selectedId)) {
+          state.selectedId = null;
+          state.selectedStepIndex = null;
+        }
+        syncControlsFromState();
+        renderAll();
+      }
+
+      function updateUndoRedoButtons() {
+        document.getElementById('btn-undo').disabled = historyStack.length === 0;
+        document.getElementById('btn-redo').disabled = redoStack.length === 0;
+      }
+
+      function normalizeSequence(rawSeq) {
+        const validIds = new Set(state.obstacles.filter(o => o.type !== 'zdc').map(o => o.id));
+        const out = [];
+        for (const item of rawSeq) {
+          const id = typeof item === 'string' ? item : item && item.id;
+          if (!id || !validIds.has(id)) continue;
+          const side = typeof item === 'object' && (item.side === -1 || item.side === 1) ? item.side : 1;
+          out.push({ id, side });
+        }
+        return out;
+      }
+
+      /* =====================================================================
+       * 3. PERCORSI PRESET CSEN 2026 (CONFORMI ALLE REGOLE)
+       * ===================================================================== */
+      const PRESETS = {
+        experience: {
+          category: 'standard',
+          csenClass: 'experience',
+          fieldW: 20,
+          fieldH: 40,
+          obstacles: [
+            { id: 'p1_zdc', type: 'zdc', x: 10, y: 29, angle: 0 },
+            { id: 'p1_h1', type: 'hoop', x: 7.5, y: 26, angle: 0 },
+            { id: 'p1_h2', type: 'hoop', x: 7.5, y: 21.5, angle: 0 },
+            { id: 'p1_b1', type: 'barrel', x: 10, y: 21.5, angle: 90 },
+            { id: 'p1_t1', type: 'tunnel', x: 12.5, y: 23, angle: 180, length: 1.0 },
+            { id: 'p1_g1', type: 'gate', x: 12.5, y: 27.5, angle: 90 },
+            { id: 'p1_h3', type: 'hoop', x: 12.5, y: 32, angle: 180 }
+          ],
+          sequence: [
+            { id: 'p1_h1', side: 1 },
+            { id: 'p1_h2', side: 1 },
+            { id: 'p1_b1', side: 1 },
+            { id: 'p1_t1', side: 1 },
+            { id: 'p1_g1', side: 1 },
+            { id: 'p1_h3', side: 1 }
+          ]
+        },
+        avviamento: {
+          category: 'standard',
+          csenClass: 'avviamento',
+          fieldW: 20,
+          fieldH: 40,
+          obstacles: [
+            { id: 'p2_zdc', type: 'zdc', x: 10, y: 26, angle: 0 },
+            { id: 'p2_h1', type: 'hoop', x: 6, y: 31, angle: 0 },
+            { id: 'p2_h2', type: 'hoop', x: 5.5, y: 25.5, angle: 0 },
+            { id: 'p2_g1', type: 'gate', x: 6, y: 19.5, angle: 105 },
+            { id: 'p2_b1', type: 'barrel', x: 9.5, y: 15.5, angle: 90 },
+            { id: 'p2_h3', type: 'hoop', x: 13.5, y: 19.5, angle: 165 },
+            { id: 'p2_t1', type: 'tunnel', x: 14.5, y: 25.5, angle: 180, length: 1.0 },
+            { id: 'p2_b2', type: 'barrel', x: 13.5, y: 31, angle: -135 },
+            { id: 'p2_h4', type: 'hoop', x: 9.5, y: 34, angle: -90 },
+            { id: 'p2_g2', type: 'gate', x: 5.5, y: 29.5, angle: -75 },
+            { id: 'p2_h5', type: 'hoop', x: 4.5, y: 23.5, angle: 0 }
+          ],
+          sequence: [
+            { id: 'p2_h1', side: 1 },
+            { id: 'p2_h2', side: 1 },
+            { id: 'p2_g1', side: 1 },
+            { id: 'p2_b1', side: 1 },
+            { id: 'p2_h3', side: 1 },
+            { id: 'p2_t1', side: 1 },
+            { id: 'p2_b2', side: 1 },
+            { id: 'p2_h4', side: 1 },
+            { id: 'p2_g2', side: -1 },
+            { id: 'p2_h5', side: 1 }
+          ]
+        },
+        senior: {
+          category: 'standard',
+          csenClass: 'senior',
+          fieldW: 20,
+          fieldH: 40,
+          obstacles: [
+            { id: 'p3_zdc', type: 'zdc', x: 10, y: 26, angle: 0 },
+            { id: 'p3_h1', type: 'hoop', x: 5, y: 34, angle: 0 },
+            { id: 'p3_g1', type: 'gate', x: 4.5, y: 26, angle: 90 },
+            { id: 'p3_t1', type: 'tunnel', x: 5.5, y: 18, angle: 15, length: 3.0 },
+            { id: 'p3_b1', type: 'barrel', x: 9.5, y: 10.5, angle: 90 },
+            { id: 'p3_g2', type: 'gate', x: 14.5, y: 16.5, angle: 120 },
+            { id: 'p3_h2', type: 'hoop', x: 15, y: 24.5, angle: 180 },
+            { id: 'p3_b2', type: 'barrel', x: 14, y: 32.5, angle: -135 },
+            { id: 'p3_h3', type: 'hoop', x: 9, y: 27, angle: -45 },
+            { id: 'p3_h4', type: 'hoop', x: 5, y: 20, angle: -15 },
+            { id: 'p3_b3', type: 'barrel', x: 7.5, y: 12, angle: 75 },
+            { id: 'p3_h5', type: 'hoop', x: 14.5, y: 11, angle: 120 },
+            { id: 'p3_t2', type: 'tunnel', x: 15.5, y: 19, angle: 180, length: 1.0 },
+            { id: 'p3_g3', type: 'gate', x: 14.5, y: 27, angle: 90 },
+            { id: 'p3_h6', type: 'hoop', x: 12.5, y: 35, angle: 195 }
+          ],
+          sequence: [
+            { id: 'p3_h1', side: 1 },
+            { id: 'p3_g1', side: 1 },
+            { id: 'p3_t1', side: 1 },
+            { id: 'p3_b1', side: 1 },
+            { id: 'p3_g2', side: 1 },
+            { id: 'p3_h2', side: 1 },
+            { id: 'p3_b2', side: 1 },
+            { id: 'p3_h3', side: 1 },
+            { id: 'p3_h4', side: 1 },
+            { id: 'p3_b3', side: 1 },
+            { id: 'p3_h5', side: 1 },
+            { id: 'p3_t2', side: 1 },
+            { id: 'p3_g3', side: -1 },
+            { id: 'p3_h2', side: 1 },
+            { id: 'p3_h6', side: 1 }
+          ]
+        }
+      };
+
+      function loadPreset(key) {
+        const p = PRESETS[key];
+        if (!p) return;
+        pushHistory();
+        state.category = p.category;
+        state.csenClass = p.csenClass;
+        state.fieldW = p.fieldW;
+        state.fieldH = p.fieldH;
+        state.obstacles = JSON.parse(JSON.stringify(p.obstacles));
+        state.sequence = JSON.parse(JSON.stringify(p.sequence));
+        state.selectedId = null;
+        state.selectedStepIndex = null;
+        syncControlsFromState();
+        fitFieldToScreen();
+        if (threeState.ready) {
+          rebuild3DField();
+          rebuild3DObjects();
+          set3DCameraPreset('iso');
+        }
+        renderAll();
+        showToast(`Preset "${CSEN_RULES[p.csenClass].label}" caricato`);
+      }
+
+      /* =====================================================================
+       * 4. MOTORE GEOMETRICO TRAIETTORIA CANE (UNIFICATO 1:1 TRA 2D E 3D)
+       * ===================================================================== */
+      function degToRad(deg) {
+        return (deg * Math.PI) / 180;
+      }
+
+      function computeDogPathSegments() {
+        const steps = [];
+        for (let i = 0; i < state.sequence.length; i++) {
+          const seqItem = state.sequence[i];
+          const obs = state.obstacles.find(o => o.id === seqItem.id);
+          if (!obs || obs.type === 'zdc') continue;
+          steps.push({ seqIndex: i, obs, side: seqItem.side === -1 ? -1 : 1 });
+        }
+
+        if (steps.length === 0) return { segments: [], waypoints: [], distances: [] };
+
+        // Prima passata: calcola ancoraggi locali di ingresso/uscita per ciascun attrezzo
+        const rawAnchors = steps.map(step => {
+          const { obs, side } = step;
+          const rad = degToRad(obs.angle || 0);
+          // Direzione frontale dell'attrezzo (angle = 0 -> verso alto / -Y in SVG, -Z in 3D)
+          const dirX = Math.sin(rad);
+          const dirY = -Math.cos(rad);
+          // Vettore destro rispetto all'orientazione angolare
+          const rightX = Math.cos(rad);
+          const rightY = Math.sin(rad);
+
+          if (obs.type === 'gate') {
+            // Gate lungo 1.20m: passaggio parallelo all'asta del Gate a 0.45m su Lato A (side=1) o Lato B (side=-1)
+            const barAxisX = rightX;
+            const barAxisY = rightY;
+            const normalX = dirX * side;
+            const normalY = dirY * side;
+            const offset = 0.45;
+            const halfSpan = 0.60;
+            const cx = obs.x + normalX * offset;
+            const cy = obs.y + normalY * offset;
+            return {
+              ...step,
+              center: { x: cx, y: cy },
+              pA: { x: cx - barAxisX * halfSpan, y: cy - barAxisY * halfSpan },
+              pB: { x: cx + barAxisX * halfSpan, y: cy + barAxisY * halfSpan }
+            };
+          }
+
+          if (obs.type === 'barrel') {
+            // Barrel Ø 0.60m: passaggio parallelo corto e compatto (halfSpan = 0.14m)
+            // all'orientazione angolare a distanza laterale 0.65m su Destra (side=1) o Sinistra (side=-1)
+            const clearance = 0.65;
+            const halfSpan = 0.14;
+            const cx = obs.x + rightX * clearance * side;
+            const cy = obs.y + rightY * clearance * side;
+            return {
+              ...step,
+              center: { x: cx, y: cy },
+              pA: { x: cx - dirX * halfSpan, y: cy - dirY * halfSpan },
+              pB: { x: cx + dirX * halfSpan, y: cy + dirY * halfSpan }
+            };
+          }
+
+          if (obs.type === 'tunnel') {
+            const halfLen = (obs.length || 1.0) / 2;
+            return {
+              ...step,
+              center: { x: obs.x, y: obs.y },
+              pA: { x: obs.x - dirX * halfLen, y: obs.y - dirY * halfLen },
+              pB: { x: obs.x + dirX * halfLen, y: obs.y + dirY * halfLen }
+            };
+          }
+
+          // Hoop (0.90m): passaggio centrale perpendicolare all'apertura
+          const halfSpan = 0.45;
+          return {
+            ...step,
+            center: { x: obs.x, y: obs.y },
+            pA: { x: obs.x - dirX * halfSpan, y: obs.y - dirY * halfSpan },
+            pB: { x: obs.x + dirX * halfSpan, y: obs.y + dirY * halfSpan }
+          };
+        });
+
+        // Seconda passata: sceglie verso pA->pB o pB->pA per continuità naturale con attrezzo precedente e successivo
+        const resolved = rawAnchors.map((item, idx) => {
+          const prevPt = idx > 0 ? rawAnchors[idx - 1].center : null;
+          const nextPt = idx < rawAnchors.length - 1 ? rawAnchors[idx + 1].center : null;
+
+          let scoreForward = 0; // entry = pA, exit = pB
+          let scoreReverse = 0; // entry = pB, exit = pA
+
+          if (prevPt) {
+            scoreForward += Math.hypot(prevPt.x - item.pA.x, prevPt.y - item.pA.y);
+            scoreReverse += Math.hypot(prevPt.x - item.pB.x, prevPt.y - item.pB.y);
+          }
+          if (nextPt) {
+            scoreForward += Math.hypot(nextPt.x - item.pB.x, nextPt.y - item.pB.y);
+            scoreReverse += Math.hypot(nextPt.x - item.pA.x, nextPt.y - item.pA.y);
+          }
+
+          if (scoreReverse < scoreForward) {
+            return { ...item, entry: item.pB, exit: item.pA };
+          }
+          return { ...item, entry: item.pA, exit: item.pB };
+        });
+
+        // Terza passata: campionamento continuo della curva di Bézier e calcolo distanze centro-centro
+        const waypoints = [];
+        const distances = [];
+
+        for (let i = 0; i < resolved.length; i++) {
+          const cur = resolved[i];
+          if (i > 0) {
+            const prev = resolved[i - 1];
+            const distMeters = Math.hypot(cur.obs.x - prev.obs.x, cur.obs.y - prev.obs.y);
+            distances.push({
+              fromIndex: i - 1,
+              toIndex: i,
+              fromObs: prev.obs,
+              toObs: cur.obs,
+              meters: distMeters,
+              midX: (prev.exit.x + cur.entry.x) / 2,
+              midY: (prev.exit.y + cur.entry.y) / 2
+            });
+
+            const dx = cur.entry.x - prev.exit.x;
+            const dy = cur.entry.y - prev.exit.y;
+            const segLen = Math.hypot(dx, dy);
+
+            if (segLen > 0.12) {
+              const prevTangentX = prev.exit.x - prev.entry.x;
+              const prevTangentY = prev.exit.y - prev.entry.y;
+              const prevTLen = Math.hypot(prevTangentX, prevTangentY) || 1;
+
+              const curTangentX = cur.exit.x - cur.entry.x;
+              const curTangentY = cur.exit.y - cur.entry.y;
+              const curTLen = Math.hypot(curTangentX, curTangentY) || 1;
+
+              // Raccordi Bézier contenuti a 0.22m sui Barrel, fino a 1.6m sugli altri attrezzi
+              const prevMaxHandle = prev.obs.type === 'barrel' ? 0.22 : 1.6;
+              const curMaxHandle = cur.obs.type === 'barrel' ? 0.22 : 1.6;
+              const handleOut = Math.min(segLen * 0.35, prevMaxHandle);
+              const handleIn = Math.min(segLen * 0.35, curMaxHandle);
+
+              const cp1 = {
+                x: prev.exit.x + (prevTangentX / prevTLen) * handleOut,
+                y: prev.exit.y + (prevTangentY / prevTLen) * handleOut
+              };
+              const cp2 = {
+                x: cur.entry.x - (curTangentX / curTLen) * handleIn,
+                y: cur.entry.y - (curTangentY / curTLen) * handleIn
+              };
+
+              const subSteps = 12;
+              for (let s = 1; s < subSteps; s++) {
+                const t = s / subSteps;
+                const mt = 1 - t;
+                const bx = mt * mt * mt * prev.exit.x +
+                  3 * mt * mt * t * cp1.x +
+                  3 * mt * t * t * cp2.x +
+                  t * t * t * cur.entry.x;
+                const by = mt * mt * mt * prev.exit.y +
+                  3 * mt * mt * t * cp1.y +
+                  3 * mt * t * t * cp2.y +
+                  t * t * t * cur.entry.y;
+                waypoints.push({ x: bx, y: by });
+              }
+            }
+          }
+
+          waypoints.push({ x: cur.entry.x, y: cur.entry.y });
+          waypoints.push({ x: cur.center.x, y: cur.center.y });
+          waypoints.push({ x: cur.exit.x, y: cur.exit.y });
+        }
+
+        return { segments: resolved, waypoints, distances };
+      }
+
+      /* =====================================================================
+       * 5. MOTORE DI VALIDAZIONE REGOLAMENTARE CSEN 2026
+       * ===================================================================== */
+      function validateCourse() {
+        const rule = CSEN_RULES[state.csenClass];
+        const distRange = rule.dist[state.category];
+        const issues = [];
+        const badDistancePairs = new Set();
+        const outOfBoundsIds = new Set();
+        const overlapIds = new Set();
+        const farFromZdcIds = new Set();
+
+        const passCount = state.sequence.length;
+        const zdc = state.obstacles.find(o => o.type === 'zdc');
+
+        // 1. Numero passaggi
+        if (passCount < rule.minPasses) {
+          issues.push({
+            level: 'error',
+            focusIds: [],
+            text: `Passaggi insufficienti: ${passCount}/${rule.minPasses} minimi per classe ${rule.label}.`
+          });
+        } else if (passCount > rule.maxPasses) {
+          issues.push({
+            level: 'error',
+            focusIds: [state.sequence[state.sequence.length - 1].id],
+            text: `Troppi passaggi: ${passCount}/${rule.maxPasses} massimi per classe ${rule.label}.`
+          });
+        } else {
+          issues.push({
+            level: 'ok',
+            focusIds: [],
+            text: `Numero passaggi conforme (${passCount} su ${rule.minPasses}–${rule.maxPasses}).`
+          });
+        }
+
+        // 2. Passaggi multipli in Experience
+        if (!rule.allowMultiPass) {
+          const seen = new Set();
+          const dupIds = [];
+          for (const s of state.sequence) {
+            if (seen.has(s.id)) dupIds.push(s.id);
+            seen.add(s.id);
+          }
+          if (dupIds.length > 0) {
+            issues.push({
+              level: 'error',
+              focusIds: dupIds,
+              text: `In classe Experience non sono ammessi passaggi ripetuti sullo stesso attrezzo.`
+            });
+          }
+        }
+
+        // 3. Zona di Conduzione (ZdC) & Raggio massimo
+        if (!zdc) {
+          issues.push({
+            level: 'error',
+            focusIds: [],
+            text: `Zona di Conduzione (ZdC) mancante: posiziona una ZdC sul campo.`
+          });
+        } else {
+          let maxDistFromZdc = 0;
+          for (const obs of state.obstacles) {
+            if (obs.type === 'zdc') continue;
+            const d = Math.hypot(obs.x - zdc.x, obs.y - zdc.y);
+            if (d > maxDistFromZdc) maxDistFromZdc = d;
+            if (d > rule.maxZdcRadius + 0.01) {
+              farFromZdcIds.add(obs.id);
+            }
+          }
+          if (farFromZdcIds.size > 0) {
+            issues.push({
+              level: 'error',
+              focusIds: Array.from(farFromZdcIds),
+              text: `${farFromZdcIds.size} attrezzo/i oltre il raggio max dalla ZdC (${maxDistFromZdc.toFixed(1)}m > ${rule.maxZdcRadius.toFixed(1)}m).`
+            });
+          } else {
+            issues.push({
+              level: 'ok',
+              focusIds: [zdc.id],
+              text: `Distanza dalla ZdC conforme (max ${maxDistFromZdc.toFixed(1)}m / ${rule.maxZdcRadius.toFixed(1)}m).`
+            });
+          }
+        }
+
+        // 4. Distanze tra attrezzi consecutivi
+        const { distances } = computeDogPathSegments();
+        const badDistObsIds = [];
+        let distErrors = 0;
+        for (const d of distances) {
+          if (d.meters < distRange.min - 0.01 || d.meters > distRange.max + 0.01) {
+            distErrors++;
+            badDistancePairs.add(d.fromIndex);
+            badDistObsIds.push(d.toObs.id);
+          }
+        }
+        if (distances.length > 0) {
+          if (distErrors > 0) {
+            issues.push({
+              level: 'error',
+              focusIds: badDistObsIds,
+              text: `${distErrors} tratta/e fuori range distanza (${distRange.min.toFixed(1)}m – ${distRange.max.toFixed(1)}m).`
+            });
+          } else {
+            issues.push({
+              level: 'ok',
+              focusIds: [],
+              text: `Tutte le ${distances.length} tratte rispettano il range ${distRange.min.toFixed(1)}m – ${distRange.max.toFixed(1)}m.`
+            });
+          }
+        }
+
+        // 5. Margini perimetrali (>= 1.0m dal bordo campo)
+        const margin = 1.0;
+        for (const obs of state.obstacles) {
+          const r = obs.type === 'tunnel' ? (obs.length || 1.0) / 2 : EQUIP_SPECS[obs.type].radius;
+          if (
+            obs.x - r < margin - 0.01 ||
+            obs.x + r > state.fieldW - margin + 0.01 ||
+            obs.y - r < margin - 0.01 ||
+            obs.y + r > state.fieldH - margin + 0.01
+          ) {
+            outOfBoundsIds.add(obs.id);
+          }
+        }
+        if (outOfBoundsIds.size > 0) {
+          issues.push({
+            level: 'error',
+            focusIds: Array.from(outOfBoundsIds),
+            text: `${outOfBoundsIds.size} elemento/i viola il margine perimetrale di sicurezza di 1.0m.`
+          });
+        } else if (state.obstacles.length > 0) {
+          issues.push({
+            level: 'ok',
+            focusIds: [],
+            text: `Margini perimetrali di sicurezza (≥ 1.0m) rispettati.`
+          });
+        }
+
+        // 6. Sovrapposizioni fisiche tra attrezzi
+        for (let i = 0; i < state.obstacles.length; i++) {
+          for (let j = i + 1; j < state.obstacles.length; j++) {
+            const a = state.obstacles[i];
+            const b = state.obstacles[j];
+            const ra = a.type === 'tunnel' ? Math.max(0.4, (a.length || 1.0) * 0.4) : EQUIP_SPECS[a.type].radius;
+            const rb = b.type === 'tunnel' ? Math.max(0.4, (b.length || 1.0) * 0.4) : EQUIP_SPECS[b.type].radius;
+            const d = Math.hypot(a.x - b.x, a.y - b.y);
+            if (d < ra + rb - 0.05) {
+              overlapIds.add(a.id);
+              overlapIds.add(b.id);
+            }
+          }
+        }
+        if (overlapIds.size > 0) {
+          issues.push({
+            level: 'error',
+            focusIds: Array.from(overlapIds),
+            text: `Sovrapposizione fisica rilevata tra ${overlapIds.size} elementi sul campo.`
+          });
+        }
+
+        const errorCount = issues.filter(i => i.level === 'error').length;
+        return {
+          isValid: errorCount === 0,
+          errorCount,
+          issues,
+          badDistancePairs,
+          outOfBoundsIds,
+          overlapIds,
+          farFromZdcIds,
+          distances
+        };
+      }
+
+      /* =====================================================================
+       * 6. RENDERING 2D SVG INTERATTIVO
+       * ===================================================================== */
+      const svgEl = document.getElementById('field-svg');
+      const viewportGroup = document.getElementById('viewport-group');
+      const layerField = document.getElementById('layer-field');
+      const layerPath = document.getElementById('layer-path');
+      const layerObstacles = document.getElementById('layer-obstacles');
+      const layerDistances = document.getElementById('layer-distances');
+      const layerSelection = document.getElementById('layer-selection');
+
+      const view2D = {
+        scale: 16,
+        tx: 40,
+        ty: 20
+      };
+
+      function apply2DTransform() {
+        viewportGroup.setAttribute('transform', `translate(${view2D.tx}, ${view2D.ty}) scale(${view2D.scale})`);
+      }
+
+      function zoomAtCenter(factor) {
+        const rect = svgEl.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const fx = (cx - view2D.tx) / view2D.scale;
+        const fy = (cy - view2D.ty) / view2D.scale;
+        view2D.scale = Math.max(6, Math.min(60, view2D.scale * factor));
+        view2D.tx = cx - fx * view2D.scale;
+        view2D.ty = cy - fy * view2D.scale;
+        apply2DTransform();
+      }
+
+      function fitFieldToScreen() {
+        const rect = svgEl.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const padX = 28;
+        const padY = 48;
+        const scaleX = (rect.width - padX * 2) / state.fieldW;
+        const scaleY = (rect.height - padY * 2) / state.fieldH;
+        view2D.scale = Math.max(6, Math.min(scaleX, scaleY));
+        view2D.tx = (rect.width - state.fieldW * view2D.scale) / 2;
+        view2D.ty = (rect.height - state.fieldH * view2D.scale) / 2 + 8;
+        apply2DTransform();
+      }
+
+      function screenToField(clientX, clientY) {
+        const rect = svgEl.getBoundingClientRect();
+        const sx = clientX - rect.left;
+        const sy = clientY - rect.top;
+        return {
+          x: (sx - view2D.tx) / view2D.scale,
+          y: (sy - view2D.ty) / view2D.scale
+        };
+      }
+
+      function render2DField() {
+        const W = state.fieldW;
+        const H = state.fieldH;
+        let html = '';
+
+        html += `<rect x="0" y="0" width="${W}" height="${H}" rx="0.3" fill="#1B4332" stroke="#94A3B8" stroke-width="0.14" />`;
+
+        for (let x = 1; x < W; x++) {
+          const isMajor = x % 5 === 0;
+          html += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#2D6A4F" stroke-width="${isMajor ? 0.08 : 0.035}" stroke-opacity="${isMajor ? 0.95 : 0.65}" />`;
+        }
+        for (let y = 1; y < H; y++) {
+          const isMajor = y % 5 === 0;
+          html += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="#2D6A4F" stroke-width="${isMajor ? 0.08 : 0.035}" stroke-opacity="${isMajor ? 0.95 : 0.65}" />`;
+        }
+
+        // Fascia perimetrale di sicurezza 1.0m
+        html += `<rect x="1" y="1" width="${W - 2}" height="${H - 2}" fill="none" stroke="#FBBF24" stroke-opacity="0.35" stroke-width="0.06" stroke-dasharray="0.35 0.25" />`;
+
+        // Raggio massimo ZdC
+        const zdc = state.obstacles.find(o => o.type === 'zdc');
+        if (zdc) {
+          const maxR = CSEN_RULES[state.csenClass].maxZdcRadius;
+          html += `<circle cx="${zdc.x}" cy="${zdc.y}" r="${maxR}" fill="none" stroke="#C084FC" stroke-opacity="0.35" stroke-width="0.07" stroke-dasharray="0.4 0.3" />`;
+        }
+
+        for (let x = 0; x <= W; x += 5) {
+          html += `<text x="${x}" y="-0.35" fill="#94A3B8" font-size="0.55" font-family="JetBrains Mono" text-anchor="middle">${x}m</text>`;
+        }
+        for (let y = 0; y <= H; y += 5) {
+          html += `<text x="-0.35" y="${y + 0.18}" fill="#94A3B8" font-size="0.55" font-family="JetBrains Mono" text-anchor="end">${y}m</text>`;
+        }
+
+        layerField.innerHTML = html;
+      }
+
+      function render2DPathAndDistances(validation) {
+        const { waypoints, distances } = computeDogPathSegments();
+        if (waypoints.length < 2) {
+          layerPath.innerHTML = '';
+          layerDistances.innerHTML = '';
+          return;
+        }
+
+        const ptsAttr = waypoints.map(p => `${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(' ');
+        let pathHtml = `
+          <polyline points="${ptsAttr}" fill="none" stroke="#0F172A" stroke-width="0.26" stroke-linecap="round" stroke-linejoin="round" opacity="0.55" />
+          <polyline points="${ptsAttr}" fill="none" stroke="#FFD166" stroke-width="0.14" stroke-linecap="round" stroke-linejoin="round" />
+        `;
+
+        for (const d of distances) {
+          const angleDeg = (Math.atan2(d.toObs.y - d.fromObs.y, d.toObs.x - d.fromObs.x) * 180) / Math.PI;
+          pathHtml += `
+            <g transform="translate(${d.midX.toFixed(3)}, ${d.midY.toFixed(3)}) rotate(${angleDeg.toFixed(1)})">
+              <polygon points="0.28,0 -0.22,-0.18 -0.12,0 -0.22,0.18" fill="#FFD166" stroke="#0F172A" stroke-width="0.04" />
+            </g>
+          `;
+        }
+        layerPath.innerHTML = pathHtml;
+
+        let distHtml = '';
+        for (const d of distances) {
+          const isBad = validation.badDistancePairs.has(d.fromIndex);
+          const bgColor = isBad ? '#EF476F' : '#06D6A0';
+          const textColor = isBad ? '#FFFFFF' : '#0F172A';
+          const label = `${d.meters.toFixed(1)}m`;
+          distHtml += `
+            <g transform="translate(${d.midX.toFixed(3)}, ${(d.midY - 0.42).toFixed(3)})">
+              <rect x="-0.72" y="-0.32" width="1.44" height="0.52" rx="0.16" fill="${bgColor}" stroke="#0F172A" stroke-width="0.05" />
+              <text x="0" y="0.04" fill="${textColor}" font-size="0.34" font-weight="800" font-family="JetBrains Mono" text-anchor="middle">${label}</text>
+            </g>
+          `;
+        }
+        layerDistances.innerHTML = distHtml;
+      }
+
+      function render2DObstacles(validation) {
+        const passMap = new Map();
+        state.sequence.forEach((item, idx) => {
+          if (!passMap.has(item.id)) passMap.set(item.id, []);
+          passMap.get(item.id).push(idx + 1);
+        });
+
+        let html = '';
+        for (const obs of state.obstacles) {
+          const hasError =
+            validation.outOfBoundsIds.has(obs.id) ||
+            validation.overlapIds.has(obs.id) ||
+            validation.farFromZdcIds.has(obs.id);
+          const strokeAlert = hasError ? '#EF476F' : null;
+          const angle = obs.angle || 0;
+
+          html += `<g class="obs-node" data-id="${obs.id}" transform="translate(${obs.x}, ${obs.y})">`;
+
+          if (obs.type === 'zdc') {
+            html += `
+              <circle cx="0" cy="0" r="1.0" fill="#C084FC" fill-opacity="0.22" stroke="${strokeAlert || '#C084FC'}" stroke-width="0.10" stroke-dasharray="0.25 0.15" />
+              <circle cx="0" cy="0" r="0.14" fill="#C084FC" />
+              <text x="0" y="0.45" fill="#F3E8FF" font-size="0.36" font-weight="800" text-anchor="middle">ZdC</text>
+            `;
+          } else if (obs.type === 'hoop') {
+            html += `
+              <g transform="rotate(${angle})">
+                <rect x="-0.45" y="-0.10" width="0.90" height="0.20" rx="0.08" fill="#FBBF24" stroke="${strokeAlert || '#0F172A'}" stroke-width="0.06" />
+                <circle cx="-0.45" cy="0" r="0.12" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.05" />
+                <circle cx="0.45" cy="0" r="0.12" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.05" />
+                <polygon points="0,-0.28 -0.10,-0.12 0.10,-0.12" fill="#FBBF24" />
+              </g>
+            `;
+          } else if (obs.type === 'gate') {
+            html += `
+              <g transform="rotate(${angle})">
+                <rect x="-0.60" y="-0.08" width="1.20" height="0.16" rx="0.06" fill="#38BDF8" stroke="${strokeAlert || '#0F172A'}" stroke-width="0.06" />
+                <circle cx="-0.60" cy="0" r="0.12" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.05" />
+                <circle cx="0.60" cy="0" r="0.12" fill="#F8FAFC" stroke="#0F172A" stroke-width="0.05" />
+                <text x="0" y="-0.22" fill="#BAE6FD" font-size="0.26" font-weight="700" text-anchor="middle">A</text>
+                <text x="0" y="0.42" fill="#BAE6FD" font-size="0.26" font-weight="700" text-anchor="middle">B</text>
+              </g>
+            `;
+          } else if (obs.type === 'barrel') {
+            html += `
+              <g transform="rotate(${angle})">
+                <circle cx="0" cy="0" r="0.30" fill="#F43F5E" stroke="${strokeAlert || '#FFFFFF'}" stroke-width="0.07" />
+                <line x1="0" y1="0.22" x2="0" y2="-0.30" stroke="#FFD166" stroke-width="0.09" stroke-linecap="round" />
+                <polygon points="0,-0.38 -0.09,-0.23 0.09,-0.23" fill="#FFD166" />
+              </g>
+            `;
+          } else if (obs.type === 'tunnel') {
+            const len = obs.length || 1.0;
+            const half = len / 2;
+            html += `
+              <g transform="rotate(${angle})">
+                <rect x="-0.40" y="${-half}" width="0.80" height="${len}" rx="0.16" fill="#34D399" fill-opacity="0.35" stroke="${strokeAlert || '#34D399'}" stroke-width="0.09" />
+                <line x1="-0.40" y1="0" x2="0.40" y2="0" stroke="#34D399" stroke-width="0.05" stroke-dasharray="0.12 0.10" />
+                <polygon points="0,${-half - 0.16} -0.10,${-half} 0.10,${-half}" fill="#34D399" />
+              </g>
+            `;
+          }
+
+          // Badge pillola multi-numero (#1, #4, #7...)
+          const nums = passMap.get(obs.id);
+          if (nums && nums.length > 0) {
+            const label = nums.join(',');
+            const badgeW = Math.max(0.56, label.length * 0.23 + 0.26);
+            html += `
+              <g transform="translate(0.45, -0.45)">
+                <rect x="${-badgeW / 2}" y="-0.26" width="${badgeW}" height="0.52" rx="0.26" fill="#0F172A" stroke="#FFD166" stroke-width="0.07" />
+                <text x="0" y="0.11" fill="#FFD166" font-size="0.31" font-weight="800" font-family="JetBrains Mono" text-anchor="middle">${label}</text>
+              </g>
+            `;
+          }
+
+          html += `</g>`;
+        }
+
+        layerObstacles.innerHTML = html;
+      }
+
+      function render2DSelection() {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs) {
+          layerSelection.innerHTML = '';
+          return;
+        }
+        const r = obs.type === 'tunnel' ? Math.max(0.75, (obs.length || 1.0) / 2 + 0.35) : EQUIP_SPECS[obs.type].radius + 0.35;
+        let html = `
+          <g transform="translate(${obs.x}, ${obs.y})">
+            <circle cx="0" cy="0" r="${r}" fill="none" stroke="#38BDF8" stroke-width="0.08" stroke-dasharray="0.22 0.14" />
+        `;
+        if (obs.type !== 'zdc') {
+          const deg = obs.angle || 0;
+          const rad = degToRad(deg);
+          const hx = Math.sin(rad) * (r + 0.55);
+          const hy = -Math.cos(rad) * (r + 0.55);
+          html += `
+            <line x1="0" y1="0" x2="${hx}" y2="${hy}" stroke="#38BDF8" stroke-width="0.07" />
+            <circle id="rotate-handle" cx="${hx}" cy="${hy}" r="0.34" fill="#38BDF8" stroke="#0F172A" stroke-width="0.08" style="cursor: grab;" />
+            <g transform="translate(0, ${(r + 0.55).toFixed(2)})">
+              <rect x="-0.56" y="-0.22" width="1.12" height="0.42" rx="0.14" fill="#0F172A" stroke="#38BDF8" stroke-width="0.05" />
+              <text x="0" y="0.08" fill="#38BDF8" font-size="0.28" font-weight="800" font-family="JetBrains Mono" text-anchor="middle">${deg}°</text>
+            </g>
+          `;
+        }
+        html += `</g>`;
+        layerSelection.innerHTML = html;
+      }
+
+      /* =====================================================================
+       * 7. INTERAZIONI TOUCH & MOUSE SUL CAMPO 2D
+       * ===================================================================== */
+      const activePointers = new Map();
+      let dragState = null;
+      let pinchStart = null;
+      let spacePressed = false;
+
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'INPUT') {
+          spacePressed = true;
+        }
+      });
+      window.addEventListener('keyup', (e) => {
+        if (e.code === 'Space') spacePressed = false;
+      });
+
+      svgEl.addEventListener('contextmenu', (e) => e.preventDefault());
+
+      svgEl.addEventListener('pointerdown', (e) => {
+        svgEl.setPointerCapture(e.pointerId);
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        // Pinch-to-zoom & pan a 2 dita
+        if (activePointers.size === 2) {
+          const pts = Array.from(activePointers.values());
+          const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+          const midX = (pts[0].x + pts[1].x) / 2;
+          const midY = (pts[0].y + pts[1].y) / 2;
+          pinchStart = {
+            dist,
+            midX,
+            midY,
+            scale: view2D.scale,
+            tx: view2D.tx,
+            ty: view2D.ty
+          };
+          dragState = null;
+          return;
+        }
+
+        // Pan con tasto destro, tasto centrale o barra spaziatrice
+        if (e.button === 2 || e.button === 1 || spacePressed) {
+          dragState = {
+            type: 'pan',
+            startClientX: e.clientX,
+            startClientY: e.clientY,
+            origTx: view2D.tx,
+            origTy: view2D.ty
+          };
+          return;
+        }
+
+        const target = e.target;
+        const fieldPt = screenToField(e.clientX, e.clientY);
+
+        // 1. Handle rotazione
+        if (target && target.id === 'rotate-handle' && state.selectedId) {
+          const obs = state.obstacles.find(o => o.id === state.selectedId);
+          if (obs) {
+            pushHistory();
+            dragState = { type: 'rotate', obsId: obs.id };
+            return;
+          }
+        }
+
+        // 2. Attrezzo
+        const obsNode = target && target.closest ? target.closest('.obs-node') : null;
+        if (obsNode) {
+          const id = obsNode.getAttribute('data-id');
+          const obs = state.obstacles.find(o => o.id === id);
+          if (obs) {
+            if (state.mode === 'seq') {
+              if (obs.type === 'zdc') {
+                showToast('La ZdC non fa parte della sequenza ostacoli');
+                return;
+              }
+              const rule = CSEN_RULES[state.csenClass];
+              if (!rule.allowMultiPass && state.sequence.some(s => s.id === obs.id)) {
+                showToast(`Classe ${rule.label}: passaggio singolo per attrezzo`);
+                return;
+              }
+              pushHistory();
+              state.sequence.push({ id: obs.id, side: 1 });
+              state.selectedId = obs.id;
+              state.selectedStepIndex = state.sequence.length - 1;
+              renderAll();
+              return;
+            }
+
+            if (state.selectedId !== obs.id) {
+              state.selectedId = obs.id;
+              const firstIdx = state.sequence.findIndex(s => s.id === obs.id);
+              state.selectedStepIndex = firstIdx !== -1 ? firstIdx : null;
+            }
+
+            dragState = {
+              type: 'obstacle',
+              obsId: obs.id,
+              startField: fieldPt,
+              origX: obs.x,
+              origY: obs.y,
+              didMove: false
+            };
+            renderAll();
+            return;
+          }
+        }
+
+        // 3. Sfondo: deseleziona e inizia Pan
+        if (state.selectedId) {
+          state.selectedId = null;
+          state.selectedStepIndex = null;
+          renderAll();
+        }
+        dragState = {
+          type: 'pan',
+          startClientX: e.clientX,
+          startClientY: e.clientY,
+          origTx: view2D.tx,
+          origTy: view2D.ty
+        };
+      });
+
+      svgEl.addEventListener('pointermove', (e) => {
+        if (!activePointers.has(e.pointerId)) return;
+        activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+        if (activePointers.size === 2 && pinchStart) {
+          const pts = Array.from(activePointers.values());
+          const dist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+          const midX = (pts[0].x + pts[1].x) / 2;
+          const midY = (pts[0].y + pts[1].y) / 2;
+          const rect = svgEl.getBoundingClientRect();
+
+          const factor = dist / (pinchStart.dist || 1);
+          const newScale = Math.max(6, Math.min(60, pinchStart.scale * factor));
+
+          const focalSvgX = pinchStart.midX - rect.left;
+          const focalSvgY = pinchStart.midY - rect.top;
+          const fieldX = (focalSvgX - pinchStart.tx) / pinchStart.scale;
+          const fieldY = (focalSvgY - pinchStart.ty) / pinchStart.scale;
+
+          view2D.scale = newScale;
+          view2D.tx = (midX - rect.left) - fieldX * newScale;
+          view2D.ty = (midY - rect.top) - fieldY * newScale;
+          apply2DTransform();
+          return;
+        }
+
+        if (!dragState) return;
+
+        if (dragState.type === 'pan') {
+          view2D.tx = dragState.origTx + (e.clientX - dragState.startClientX);
+          view2D.ty = dragState.origTy + (e.clientY - dragState.startClientY);
+          apply2DTransform();
+          return;
+        }
+
+        const obs = state.obstacles.find(o => o.id === dragState.obsId);
+        if (!obs) return;
+        const pt = screenToField(e.clientX, e.clientY);
+
+        if (dragState.type === 'obstacle') {
+          const dx = pt.x - dragState.startField.x;
+          const dy = pt.y - dragState.startField.y;
+          if (!dragState.didMove && Math.hypot(dx, dy) > 0.08) {
+            pushHistory();
+            dragState.didMove = true;
+          }
+          if (dragState.didMove) {
+            const rawX = dragState.origX + dx;
+            const rawY = dragState.origY + dy;
+            obs.x = Math.max(0.5, Math.min(state.fieldW - 0.5, Math.round(rawX * 4) / 4));
+            obs.y = Math.max(0.5, Math.min(state.fieldH - 0.5, Math.round(rawY * 4) / 4));
+            renderAll();
+          }
+        } else if (dragState.type === 'rotate') {
+          const angleRad = Math.atan2(pt.x - obs.x, -(pt.y - obs.y));
+          let deg = Math.round(((angleRad * 180) / Math.PI) / 15) * 15;
+          deg = ((deg % 360) + 360) % 360;
+          if (obs.angle !== deg) {
+            obs.angle = deg;
+            renderAll();
+          }
+        }
+      });
+
+      function endPointer(e) {
+        activePointers.delete(e.pointerId);
+        if (activePointers.size < 2) pinchStart = null;
+        if (activePointers.size === 0) dragState = null;
+      }
+
+      svgEl.addEventListener('pointerup', endPointer);
+      svgEl.addEventListener('pointercancel', endPointer);
+
+      svgEl.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const rect = svgEl.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const fx = (mx - view2D.tx) / view2D.scale;
+        const fy = (my - view2D.ty) / view2D.scale;
+        const factor = e.deltaY < 0 ? 1.12 : 0.89;
+        view2D.scale = Math.max(6, Math.min(60, view2D.scale * factor));
+        view2D.tx = mx - fx * view2D.scale;
+        view2D.ty = my - fy * view2D.scale;
+        apply2DTransform();
+      }, { passive: false });
+
+      /* =====================================================================
+       * 8. VISTA 3D IMMERSIVA + ANIMAZIONE CANE & CONDUTTORE
+       * ===================================================================== */
+      const threeState = {
+        ready: false,
+        scene: null,
+        camera: null,
+        renderer: null,
+        controls: null,
+        staticGroup: null,
+        dynamicGroup: null,
+        actorsGroup: null,
+        dogRig: null,
+        handlerRig: null,
+        animFrameId: null,
+        lastTimestamp: 0,
+        cameraMode: 'iso',
+        sim: {
+          playing: false,
+          progress: 0,
+          speed: 1.0,
+          curve: null,
+          curveLength: 0,
+          lastHeading: 0
+        }
+      };
+
+      function disposeThreeGroup(group) {
+        if (!group) return;
+        while (group.children.length > 0) {
+          const obj = group.children[0];
+          group.remove(obj);
+          obj.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(m => {
+                  if (m.map) m.map.dispose();
+                  m.dispose();
+                });
+              } else {
+                if (child.material.map) child.material.map.dispose();
+                child.material.dispose();
+              }
+            }
+          });
+        }
+      }
+
+      /* Modello 3D Border Collie articolato */
+      function buildDogRig(THREE) {
+        const root = new THREE.Group();
+        const bodyGroup = new THREE.Group();
+        root.add(bodyGroup);
+
+        const blackMat = new THREE.MeshStandardMaterial({ color: '#1E293B', roughness: 0.55 });
+        const whiteMat = new THREE.MeshStandardMaterial({ color: '#F8FAFC', roughness: 0.45 });
+        const noseMat = new THREE.MeshStandardMaterial({ color: '#090D16', roughness: 0.3 });
+        const collarMat = new THREE.MeshStandardMaterial({ color: '#FBBF24', roughness: 0.35 });
+
+        // Tronco
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.23, 0.56), blackMat);
+        torso.position.set(0, 0.35, 0);
+        torso.castShadow = true;
+        bodyGroup.add(torso);
+
+        // Collare bianco sul petto
+        const chest = new THREE.Mesh(new THREE.BoxGeometry(0.245, 0.235, 0.16), whiteMat);
+        chest.position.set(0, 0.35, 0.21);
+        bodyGroup.add(chest);
+
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.045, 14), collarMat);
+        collar.rotation.x = Math.PI / 2;
+        collar.position.set(0, 0.41, 0.29);
+        bodyGroup.add(collar);
+
+        // Testa + Muso + Orecchie
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 0.47, 0.33);
+        bodyGroup.add(headGroup);
+
+        const cranium = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.20), blackMat);
+        cranium.castShadow = true;
+        headGroup.add(cranium);
+
+        const blaze = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.165, 0.205), whiteMat);
+        headGroup.add(blaze);
+
+        const muzzle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.09, 0.14), whiteMat);
+        muzzle.position.set(0, -0.025, 0.14);
+        headGroup.add(muzzle);
+
+        const nose = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 10), noseMat);
+        nose.position.set(0, 0.005, 0.21);
+        headGroup.add(nose);
+
+        const earGeo = new THREE.ConeGeometry(0.04, 0.10, 6);
+        const earL = new THREE.Mesh(earGeo, blackMat);
+        earL.position.set(-0.065, 0.11, -0.02);
+        earL.rotation.z = 0.22;
+        const earR = new THREE.Mesh(earGeo, blackMat);
+        earR.position.set(0.065, 0.11, -0.02);
+        earR.rotation.z = -0.22;
+        headGroup.add(earL, earR);
+
+        // Coda
+        const tailGroup = new THREE.Group();
+        tailGroup.position.set(0, 0.40, -0.28);
+        bodyGroup.add(tailGroup);
+
+        const tailMain = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.036, 0.26, 8), blackMat);
+        tailMain.position.set(0, 0.06, -0.11);
+        tailMain.rotation.x = -0.85;
+        const tailTip = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 8), whiteMat);
+        tailTip.position.set(0, 0.14, -0.21);
+        tailGroup.add(tailMain, tailTip);
+
+        // 4 Zampe articolate
+        function createLeg(x, z) {
+          const pivot = new THREE.Group();
+          pivot.position.set(x, 0.26, z);
+          const upper = new THREE.Mesh(new THREE.BoxGeometry(0.065, 0.18, 0.07), blackMat);
+          upper.position.set(0, -0.08, 0);
+          upper.castShadow = true;
+          const paw = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.10, 0.065), whiteMat);
+          paw.position.set(0, -0.21, 0.01);
+          pivot.add(upper, paw);
+          bodyGroup.add(pivot);
+          return pivot;
+        }
+
+        const legFL = createLeg(-0.085, 0.21);
+        const legFR = createLeg(0.085, 0.21);
+        const legBL = createLeg(-0.085, -0.21);
+        const legBR = createLeg(0.085, -0.21);
+
+        return { root, bodyGroup, headGroup, tailGroup, legFL, legFR, legBL, legBR };
+      }
+
+      /* Modello 3D Conduttore nella ZdC */
+      function buildHandlerRig(THREE) {
+        const root = new THREE.Group();
+        const torsoGroup = new THREE.Group();
+        root.add(torsoGroup);
+
+        const pantsMat = new THREE.MeshStandardMaterial({ color: '#1E293B', roughness: 0.7 });
+        const jacketMat = new THREE.MeshStandardMaterial({ color: '#0284C7', roughness: 0.5 });
+        const skinMat = new THREE.MeshStandardMaterial({ color: '#FDBA74', roughness: 0.6 });
+        const capMat = new THREE.MeshStandardMaterial({ color: '#FBBF24', roughness: 0.4 });
+
+        // Gambe
+        const legGeo = new THREE.CylinderGeometry(0.075, 0.065, 0.84, 12);
+        const legL = new THREE.Mesh(legGeo, pantsMat);
+        legL.position.set(-0.11, 0.42, 0);
+        legL.castShadow = true;
+        const legR = new THREE.Mesh(legGeo, pantsMat);
+        legR.position.set(0.11, 0.42, 0);
+        legR.castShadow = true;
+        root.add(legL, legR);
+
+        // Busto
+        const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.56, 14), jacketMat);
+        chest.position.set(0, 1.12, 0);
+        chest.castShadow = true;
+        torsoGroup.add(chest);
+
+        // Testa + Cappellino
+        const headGroup = new THREE.Group();
+        headGroup.position.set(0, 1.52, 0);
+        torsoGroup.add(headGroup);
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.125, 16, 16), skinMat);
+        head.castShadow = true;
+        headGroup.add(head);
+
+        const capCrown = new THREE.Mesh(new THREE.SphereGeometry(0.13, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2), capMat);
+        capCrown.position.y = 0.01;
+        const capVisor = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.02, 0.12), capMat);
+        capVisor.position.set(0, 0.03, 0.13);
+        headGroup.add(capCrown, capVisor);
+
+        // Braccio destro di conduzione (indica il cane)
+        const armRGroup = new THREE.Group();
+        armRGroup.position.set(0.22, 1.34, 0);
+        const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.54, 10), jacketMat);
+        armR.position.set(0, -0.24, 0);
+        const handR = new THREE.Mesh(new THREE.SphereGeometry(0.045, 10, 10), skinMat);
+        handR.position.set(0, -0.52, 0);
+        armRGroup.add(armR, handR);
+        torsoGroup.add(armRGroup);
+
+        // Braccio sinistro
+        const armLGroup = new THREE.Group();
+        armLGroup.position.set(-0.22, 1.34, 0);
+        const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.04, 0.54, 10), jacketMat);
+        armL.position.set(0, -0.24, 0);
+        armLGroup.add(armL);
+        torsoGroup.add(armLGroup);
+
+        return { root, torsoGroup, headGroup, armRGroup, armLGroup };
+      }
+
+      function syncAnimButtonUI() {
+        const iconEl = document.getElementById('anim-play-icon');
+        const labelEl = document.getElementById('anim-play-label');
+        if (!iconEl || !labelEl) return;
+        if (threeState.sim.playing) {
+          iconEl.textContent = '⏸';
+          labelEl.textContent = 'Pausa';
+        } else {
+          iconEl.textContent = '▶';
+          labelEl.textContent = threeState.sim.progress > 0.01 && threeState.sim.progress < 0.99 ? 'Riprendi' : 'Avvia Corsa';
+        }
+      }
+
+      function update3DActors(dtSec) {
+        if (!threeState.ready || !threeState.dogRig || !threeState.handlerRig) return;
+        const sim = threeState.sim;
+        const dog = threeState.dogRig;
+        const handler = threeState.handlerRig;
+
+        const zdc = state.obstacles.find(o => o.type === 'zdc');
+        if (zdc) {
+          handler.root.visible = true;
+          handler.root.position.set(zdc.x, 0, zdc.y);
+        } else {
+          handler.root.visible = false;
+        }
+
+        if (!sim.curve || sim.curveLength <= 0.2) {
+          dog.root.visible = false;
+          return;
+        }
+
+        dog.root.visible = true;
+
+        if (sim.playing && dtSec > 0) {
+          const dogSpeedMetersPerSec = 5.4 * sim.speed; // velocità realistica di corsa Hoopers
+          sim.progress += (dogSpeedMetersPerSec * dtSec) / sim.curveLength;
+          if (sim.progress >= 1.0) {
+            sim.progress = 1.0;
+            sim.playing = false;
+            syncAnimButtonUI();
+          }
+        }
+
+        const u = Math.max(0, Math.min(1, sim.progress));
+        const pos = sim.curve.getPointAt(u);
+        const tangent = sim.curve.getTangentAt(u).normalize();
+
+        dog.root.position.set(pos.x, 0, pos.z);
+        const targetHeading = Math.atan2(tangent.x, tangent.z);
+
+        // Calcolo sterzata per inclinazione naturale in curva
+        let deltaHeading = targetHeading - sim.lastHeading;
+        while (deltaHeading > Math.PI) deltaHeading -= Math.PI * 2;
+        while (deltaHeading < -Math.PI) deltaHeading += Math.PI * 2;
+        sim.lastHeading = targetHeading;
+
+        dog.root.rotation.y = targetHeading;
+
+        // Scala taglia Small vs Standard
+        const dogScale = state.category === 'small' ? 0.78 : 1.0;
+        dog.root.scale.set(dogScale, dogScale, dogScale);
+
+        // Ciclo galoppo quando in movimento
+        const gallopPhase = u * sim.curveLength * 3.4;
+        const activeAmp = sim.playing ? 1.0 : 0.0;
+        const stride = Math.sin(gallopPhase) * 0.75 * activeAmp;
+        const oppStride = Math.sin(gallopPhase + Math.PI * 0.85) * 0.75 * activeAmp;
+
+        dog.legFL.rotation.x = stride;
+        dog.legFR.rotation.x = stride * 0.85 + 0.15 * activeAmp;
+        dog.legBL.rotation.x = oppStride;
+        dog.legBR.rotation.x = oppStride * 0.85 - 0.15 * activeAmp;
+
+        dog.bodyGroup.position.y = Math.abs(Math.cos(gallopPhase)) * 0.055 * activeAmp;
+        dog.bodyGroup.rotation.z = Math.max(-0.28, Math.min(0.28, -deltaHeading * 2.5));
+        dog.tailGroup.rotation.y = Math.sin(gallopPhase * 1.3) * 0.35;
+        dog.headGroup.rotation.x = -0.08 * activeAmp;
+
+        // Conduttore segue con sguardo, busto e braccio la posizione del cane
+        if (zdc) {
+          const dx = pos.x - zdc.x;
+          const dz = pos.z - zdc.y;
+          const handlerAngle = Math.atan2(dx, dz);
+          handler.torsoGroup.rotation.y = handlerAngle;
+          handler.armRGroup.rotation.x = -1.15 + Math.sin(gallopPhase * 0.35) * 0.12 * activeAmp;
+          handler.armRGroup.rotation.z = -0.22;
+          handler.armLGroup.rotation.x = -0.25;
+        }
+
+        // Camera inseguimento cane se attiva
+        if (threeState.cameraMode === 'dog' && threeState.camera && threeState.controls) {
+          threeState.controls.target.set(pos.x, 0.45, pos.z);
+          const camX = pos.x - tangent.x * 3.4;
+          const camZ = pos.z - tangent.z * 3.4;
+          threeState.camera.position.lerp({ x: camX, y: 1.55, z: camZ }, 0.14);
+        }
+      }
+
+      function init3DScene() {
+        if (threeState.ready || !window.THREE_MOD) return;
+        const { THREE, OrbitControls } = window.THREE_MOD;
+        const container = document.getElementById('three-container');
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color('#0F172A');
+        scene.fog = new THREE.FogExp2('#0F172A', 0.011);
+
+        const w = container.clientWidth || window.innerWidth;
+        const h = container.clientHeight || window.innerHeight;
+        const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 200);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.innerHTML = '';
+        container.appendChild(renderer.domElement);
+
+        const hemiLight = new THREE.HemisphereLight('#E0F2FE', '#1B4332', 0.95);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight('#FFFBEB', 1.15);
+        dirLight.position.set(22, 34, 28);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.enableRotate = true;
+        controls.enableZoom = true;
+        controls.enablePan = true;
+        controls.zoomToCursor = false;
+        controls.screenSpacePanning = false;
+        controls.maxPolarAngle = Math.PI / 2 - 0.03;
+        controls.minDistance = 1.5;
+        controls.maxDistance = 95;
+        controls.touches = {
+          ONE: THREE.TOUCH.ROTATE,
+          TWO: THREE.TOUCH.DOLLY_PAN
+        };
+        controls.target.set(state.fieldW / 2, 0, state.fieldH / 2);
+        camera.position.set(state.fieldW / 2, 24, state.fieldH / 2 + 24);
+        controls.update();
+
+        const staticGroup = new THREE.Group();
+        const dynamicGroup = new THREE.Group();
+        const actorsGroup = new THREE.Group();
+        scene.add(staticGroup);
+        scene.add(dynamicGroup);
+        scene.add(actorsGroup);
+
+        const dogRig = buildDogRig(THREE);
+        const handlerRig = buildHandlerRig(THREE);
+        actorsGroup.add(dogRig.root);
+        actorsGroup.add(handlerRig.root);
+
+        threeState.scene = scene;
+        threeState.camera = camera;
+        threeState.renderer = renderer;
+        threeState.controls = controls;
+        threeState.staticGroup = staticGroup;
+        threeState.dynamicGroup = dynamicGroup;
+        threeState.actorsGroup = actorsGroup;
+        threeState.dogRig = dogRig;
+        threeState.handlerRig = handlerRig;
+        threeState.ready = true;
+        threeState.lastTimestamp = performance.now();
+
+        rebuild3DField();
+        rebuild3DObjects();
+
+        function animate(now) {
+          threeState.animFrameId = requestAnimationFrame(animate);
+          const dt = Math.min(0.05, Math.max(0, (now - threeState.lastTimestamp) / 1000));
+          threeState.lastTimestamp = now;
+
+          if (state.view === '3d' && threeState.renderer && threeState.scene && threeState.camera) {
+            update3DActors(dt);
+            threeState.controls.update();
+            threeState.renderer.render(threeState.scene, threeState.camera);
+          }
+        }
+        requestAnimationFrame(animate);
+      }
+
+      function rebuild3DField() {
+        if (!threeState.ready) return;
+        const { THREE } = window.THREE_MOD;
+        const sg = threeState.staticGroup;
+        disposeThreeGroup(sg);
+
+        const W = state.fieldW;
+        const H = state.fieldH;
+
+        const grassGeo = new THREE.PlaneGeometry(W, H);
+        const grassMat = new THREE.MeshStandardMaterial({ color: '#1B4332', roughness: 0.85 });
+        const grass = new THREE.Mesh(grassGeo, grassMat);
+        grass.rotation.x = -Math.PI / 2;
+        grass.position.set(W / 2, 0, H / 2);
+        grass.receiveShadow = true;
+        sg.add(grass);
+
+        const gridMat = new THREE.LineBasicMaterial({ color: '#2D6A4F', transparent: true, opacity: 0.7 });
+        const points = [];
+        for (let x = 0; x <= W; x++) {
+          points.push(new THREE.Vector3(x, 0.01, 0), new THREE.Vector3(x, 0.01, H));
+        }
+        for (let z = 0; z <= H; z++) {
+          points.push(new THREE.Vector3(0, 0.01, z), new THREE.Vector3(W, 0.01, z));
+        }
+        const gridGeo = new THREE.BufferGeometry().setFromPoints(points);
+        sg.add(new THREE.LineSegments(gridGeo, gridMat));
+
+        const fenceMat = new THREE.MeshStandardMaterial({ color: '#475569', roughness: 0.5 });
+        const postGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.75, 8);
+        for (let x = 0; x <= W; x += 5) {
+          for (const z of [0, H]) {
+            const post = new THREE.Mesh(postGeo, fenceMat);
+            post.position.set(x, 0.375, z);
+            sg.add(post);
+          }
+        }
+        for (let z = 5; z < H; z += 5) {
+          for (const x of [0, W]) {
+            const post = new THREE.Mesh(postGeo, fenceMat);
+            post.position.set(x, 0.375, z);
+            sg.add(post);
+          }
+        }
+      }
+
+      function createNumberSprite(text) {
+        const { THREE } = window.THREE_MOD;
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0F172A';
+        ctx.beginPath();
+        ctx.arc(64, 64, 52, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 8;
+        ctx.strokeStyle = '#FFD166';
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFD166';
+        ctx.font = 'bold 46px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, 64, 67);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(0.65, 0.65, 1);
+        return sprite;
+      }
+
+      function rebuild3DObjects() {
+        if (!threeState.ready) return;
+        const { THREE } = window.THREE_MOD;
+        const dg = threeState.dynamicGroup;
+        disposeThreeGroup(dg);
+
+        const passMap = new Map();
+        state.sequence.forEach((item, idx) => {
+          if (!passMap.has(item.id)) passMap.set(item.id, []);
+          passMap.get(item.id).push(idx + 1);
+        });
+
+        for (const obs of state.obstacles) {
+          const group = new THREE.Group();
+          group.position.set(obs.x, 0, obs.y);
+          group.rotation.y = -degToRad(obs.angle || 0);
+
+          if (obs.type === 'zdc') {
+            const ringGeo = new THREE.RingGeometry(0.90, 1.0, 48);
+            const ringMat = new THREE.MeshBasicMaterial({ color: '#C084FC', side: THREE.DoubleSide });
+            const ring = new THREE.Mesh(ringGeo, ringMat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.position.y = 0.02;
+            group.add(ring);
+
+            const discGeo = new THREE.CircleGeometry(0.90, 48);
+            const discMat = new THREE.MeshBasicMaterial({ color: '#C084FC', transparent: true, opacity: 0.18, side: THREE.DoubleSide });
+            const disc = new THREE.Mesh(discGeo, discMat);
+            disc.rotation.x = -Math.PI / 2;
+            disc.position.y = 0.015;
+            group.add(disc);
+          } else if (obs.type === 'hoop') {
+            const archMat = new THREE.MeshStandardMaterial({ color: '#FBBF24', roughness: 0.35 });
+            const baseMat = new THREE.MeshStandardMaterial({ color: '#F8FAFC', roughness: 0.5 });
+
+            const archGeo = new THREE.TorusGeometry(0.45, 0.032, 12, 32, Math.PI);
+            const arch = new THREE.Mesh(archGeo, archMat);
+            arch.position.y = 0.45;
+            arch.castShadow = true;
+            group.add(arch);
+
+            const legGeo = new THREE.CylinderGeometry(0.032, 0.032, 0.45, 10);
+            const legL = new THREE.Mesh(legGeo, archMat);
+            legL.position.set(-0.45, 0.225, 0);
+            const legR = new THREE.Mesh(legGeo, archMat);
+            legR.position.set(0.45, 0.225, 0);
+            group.add(legL, legR);
+
+            const footGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.50, 8);
+            const footL = new THREE.Mesh(footGeo, baseMat);
+            footL.rotation.x = Math.PI / 2;
+            footL.position.set(-0.45, 0.03, 0);
+            const footR = new THREE.Mesh(footGeo, baseMat);
+            footR.rotation.x = Math.PI / 2;
+            footR.position.set(0.45, 0.03, 0);
+            group.add(footL, footR);
+          } else if (obs.type === 'gate') {
+            const frameMat = new THREE.MeshStandardMaterial({ color: '#38BDF8', roughness: 0.35 });
+            const meshMat = new THREE.MeshStandardMaterial({ color: '#0284C7', transparent: true, opacity: 0.35, side: THREE.DoubleSide });
+
+            const postGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.85, 10);
+            const pL = new THREE.Mesh(postGeo, frameMat);
+            pL.position.set(-0.60, 0.425, 0);
+            const pR = new THREE.Mesh(postGeo, frameMat);
+            pR.position.set(0.60, 0.425, 0);
+
+            const railGeo = new THREE.CylinderGeometry(0.028, 0.028, 1.20, 10);
+            const topRail = new THREE.Mesh(railGeo, frameMat);
+            topRail.rotation.z = Math.PI / 2;
+            topRail.position.set(0, 0.83, 0);
+            const botRail = new THREE.Mesh(railGeo, frameMat);
+            botRail.rotation.z = Math.PI / 2;
+            botRail.position.set(0, 0.15, 0);
+
+            const panelGeo = new THREE.PlaneGeometry(1.16, 0.65);
+            const panel = new THREE.Mesh(panelGeo, meshMat);
+            panel.position.set(0, 0.49, 0);
+
+            group.add(pL, pR, topRail, botRail, panel);
+          } else if (obs.type === 'barrel') {
+            const barrelGeo = new THREE.CylinderGeometry(0.30, 0.30, 0.85, 24);
+            const barrelMat = new THREE.MeshStandardMaterial({ color: '#F43F5E', roughness: 0.4 });
+            const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+            barrel.position.y = 0.425;
+            barrel.castShadow = true;
+
+            const stripeGeo = new THREE.CylinderGeometry(0.304, 0.304, 0.14, 24);
+            const stripeMat = new THREE.MeshStandardMaterial({ color: '#F8FAFC', roughness: 0.4 });
+            const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+            stripe.position.y = 0.45;
+
+            const notchGeo = new THREE.BoxGeometry(0.08, 0.04, 0.28);
+            const notchMat = new THREE.MeshBasicMaterial({ color: '#FFD166' });
+            const notch = new THREE.Mesh(notchGeo, notchMat);
+            notch.position.set(0, 0.86, -0.14);
+
+            group.add(barrel, stripe, notch);
+          } else if (obs.type === 'tunnel') {
+            const len = obs.length || 1.0;
+            const tunGeo = new THREE.CylinderGeometry(0.40, 0.40, len, 24, 1, true);
+            const tunMat = new THREE.MeshStandardMaterial({
+              color: '#10B981',
+              roughness: 0.5,
+              side: THREE.DoubleSide
+            });
+            const tun = new THREE.Mesh(tunGeo, tunMat);
+            tun.rotation.x = Math.PI / 2;
+            tun.position.y = 0.40;
+            tun.castShadow = true;
+
+            const ringGeo = new THREE.TorusGeometry(0.40, 0.025, 10, 28);
+            const ringMat = new THREE.MeshStandardMaterial({ color: '#FBBF24' });
+            const r1 = new THREE.Mesh(ringGeo, ringMat);
+            r1.position.set(0, 0.40, -len / 2);
+            const r2 = new THREE.Mesh(ringGeo, ringMat);
+            r2.position.set(0, 0.40, len / 2);
+
+            group.add(tun, r1, r2);
+          }
+
+          const nums = passMap.get(obs.id);
+          if (nums && nums.length > 0) {
+            const sprite = createNumberSprite(nums.join(','));
+            sprite.position.set(0, 1.35, 0);
+            group.add(sprite);
+          }
+
+          dg.add(group);
+        }
+
+        // Tubo luminoso 3D della traiettoria identico al 2D + Spline per il cane 3D
+        const { waypoints } = computeDogPathSegments();
+        threeState.sim.curve = null;
+        threeState.sim.curveLength = 0;
+
+        if (waypoints.length >= 2) {
+          const pts3D = waypoints.map(p => new THREE.Vector3(p.x, 0.14, p.y));
+          const cleanPts = [pts3D[0]];
+          for (let i = 1; i < pts3D.length; i++) {
+            if (pts3D[i].distanceTo(cleanPts[cleanPts.length - 1]) > 0.03) {
+              cleanPts.push(pts3D[i]);
+            }
+          }
+          if (cleanPts.length >= 2) {
+            const curve = new THREE.CatmullRomCurve3(cleanPts, false, 'catmullrom', 0.25);
+            threeState.sim.curve = curve;
+            threeState.sim.curveLength = curve.getLength();
+            threeState.sim.progress = Math.min(threeState.sim.progress, 1.0);
+
+            const tubeGeo = new THREE.TubeGeometry(curve, Math.max(40, cleanPts.length * 6), 0.055, 8, false);
+            const tubeMat = new THREE.MeshStandardMaterial({
+              color: '#FFD166',
+              emissive: '#F59E0B',
+              emissiveIntensity: 0.65,
+              roughness: 0.25
+            });
+            dg.add(new THREE.Mesh(tubeGeo, tubeMat));
+          }
+        }
+
+        update3DActors(0);
+      }
+
+      function set3DCameraPreset(mode) {
+        if (!threeState.ready || !threeState.camera || !threeState.controls) return;
+        threeState.cameraMode = mode;
+        const cx = state.fieldW / 2;
+        const cz = state.fieldH / 2;
+
+        if (mode === 'iso') {
+          threeState.controls.rotateSpeed = 1.0;
+          threeState.controls.panSpeed = 1.0;
+          threeState.controls.target.set(cx, 0, cz);
+          threeState.camera.position.set(cx, 24, cz + 24);
+        } else if (mode === 'top') {
+          threeState.controls.rotateSpeed = 1.0;
+          threeState.controls.panSpeed = 1.0;
+          threeState.controls.target.set(cx, 0, cz);
+          threeState.camera.position.set(cx, 42, cz + 0.05);
+        } else if (mode === 'handler') {
+          const zdc = state.obstacles.find(o => o.type === 'zdc');
+          if (!zdc) {
+            showToast('Posiziona una ZdC sul campo per la Vista Conduttore');
+            threeState.controls.rotateSpeed = 1.0;
+            threeState.controls.panSpeed = 1.0;
+            threeState.controls.target.set(cx, 0, cz);
+            threeState.camera.position.set(cx, 24, cz + 24);
+          } else {
+            // Vista dalla ZdC (altezza occhi 1.65m) con comandi di spostamento/pan invertiti
+            const equip = state.obstacles.filter(o => o.type !== 'zdc');
+            let tx = cx;
+            let tz = cz;
+            if (equip.length > 0) {
+              tx = equip.reduce((acc, o) => acc + o.x, 0) / equip.length;
+              tz = equip.reduce((acc, o) => acc + o.y, 0) / equip.length;
+            }
+            threeState.controls.rotateSpeed = -0.75;
+            threeState.controls.panSpeed = -1.0;
+            threeState.camera.position.set(zdc.x, 1.65, zdc.y);
+            threeState.controls.target.set(tx, 0.85, tz);
+            showToast('Vista Conduttore dalla ZdC (altezza 1.65m)');
+          }
+        } else if (mode === 'dog') {
+          if (!threeState.sim.curve || threeState.sim.curveLength <= 0.2) {
+            showToast('Aggiungi ostacoli in sequenza per seguire il cane');
+            return;
+          }
+          threeState.controls.rotateSpeed = 1.0;
+          threeState.controls.panSpeed = 1.0;
+          if (!threeState.sim.playing) {
+            if (threeState.sim.progress >= 0.99) threeState.sim.progress = 0;
+            threeState.sim.playing = true;
+            syncAnimButtonUI();
+          }
+          update3DActors(0);
+        }
+        threeState.controls.update();
+      }
+
+      /* =====================================================================
+       * 9. AGGIORNAMENTO UI, BARRA CONTESTUALE & DRAWER VALIDAZIONE
+       * ===================================================================== */
+      function updateContextualBar() {
+        const bar = document.getElementById('contextual-bar');
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs || state.view !== '2d') {
+          bar.classList.add('hidden');
+          return;
+        }
+        bar.classList.remove('hidden');
+
+        const spec = EQUIP_SPECS[obs.type];
+        document.getElementById('ctx-item-label').textContent = spec.name;
+
+        const btnRotCcw = document.getElementById('btn-ctx-rot-ccw');
+        const btnRotCw = document.getElementById('btn-ctx-rot-cw');
+        const selectStep = document.getElementById('select-ctx-step');
+        const btnSide = document.getElementById('btn-ctx-side');
+        const btnLen = document.getElementById('btn-ctx-length');
+
+        const isZdc = obs.type === 'zdc';
+        btnRotCcw.classList.toggle('hidden', isZdc);
+        btnRotCw.classList.toggle('hidden', isZdc);
+
+        // Gestione passaggio lato su Gate e Barrel con selettore step se multi-passaggio
+        const matchingSeqIndices = state.sequence
+          .map((s, idx) => (s.id === obs.id ? idx : -1))
+          .filter(idx => idx !== -1);
+
+        if ((obs.type === 'gate' || obs.type === 'barrel') && matchingSeqIndices.length > 0) {
+          if (!matchingSeqIndices.includes(state.selectedStepIndex)) {
+            state.selectedStepIndex = matchingSeqIndices[0];
+          }
+          const activeIdx = state.selectedStepIndex;
+
+          if (matchingSeqIndices.length > 1) {
+            selectStep.classList.remove('hidden');
+            selectStep.innerHTML = matchingSeqIndices
+              .map(idx => `<option value="${idx}" ${idx === activeIdx ? 'selected' : ''}>Step #${idx + 1}</option>`)
+              .join('');
+          } else {
+            selectStep.classList.add('hidden');
+          }
+
+          btnSide.classList.remove('hidden');
+          const curSide = state.sequence[activeIdx].side;
+          const sideLabel = obs.type === 'gate'
+            ? (curSide === 1 ? 'Lato A' : 'Lato B')
+            : (curSide === 1 ? 'Destra' : 'Sinistra');
+          btnSide.textContent = `⇄ ${sideLabel}`;
+        } else {
+          selectStep.classList.add('hidden');
+          btnSide.classList.add('hidden');
+        }
+
+        if (obs.type === 'tunnel') {
+          btnLen.classList.remove('hidden');
+          const curLen = obs.length || 1.0;
+          btnLen.textContent = curLen === 1.0 ? '1.0m → 3.0m' : '3.0m → 1.0m';
+        } else {
+          btnLen.classList.add('hidden');
+        }
+      }
+
+      function updateValidationAndDrawer(validation) {
+        const rule = CSEN_RULES[state.csenClass];
+        const distRange = rule.dist[state.category];
+
+        const pill = document.getElementById('btn-status-pill');
+        const pillText = document.getElementById('status-pill-text');
+        const dot = document.getElementById('drawer-badge-dot');
+
+        if (validation.isValid) {
+          pill.className = 'h-8 px-3 rounded-xl text-[11px] font-extrabold flex items-center gap-1.5 truncate transition-colors bg-[#06D6A0]/20 text-[#06D6A0] border border-[#06D6A0]/40 active:scale-95';
+          pillText.textContent = '✓ Conforme';
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#06D6A0] shrink-0';
+        } else {
+          pill.className = 'h-8 px-3 rounded-xl text-[11px] font-extrabold flex items-center gap-1.5 truncate transition-colors bg-[#EF476F]/20 text-[#EF476F] border border-[#EF476F]/40 active:scale-95';
+          pillText.textContent = `⚠ ${validation.errorCount} ${validation.errorCount === 1 ? 'Errore' : 'Errori'}`;
+          dot.className = 'w-2.5 h-2.5 rounded-full bg-[#EF476F] shrink-0';
+        }
+
+        document.getElementById('drawer-seq-count').textContent = `${state.sequence.length} passaggi`;
+        document.getElementById('rule-summary-tag').textContent = `${state.category === 'small' ? 'Small' : 'Standard'} • ${rule.label}`;
+        document.getElementById('spec-passes').textContent = `${rule.minPasses} - ${rule.maxPasses}`;
+        document.getElementById('spec-dist').textContent = `${distRange.min.toFixed(1)} - ${distRange.max.toFixed(1)}m`;
+        document.getElementById('spec-zdc').textContent = `≤ ${rule.maxZdcRadius.toFixed(1)}m`;
+
+        const scoreLabel = document.getElementById('validation-score-label');
+        scoreLabel.textContent = validation.isValid ? 'Conforme CSEN 2026' : `${validation.errorCount} anomalie`;
+        scoreLabel.className = validation.isValid ? 'text-[11px] font-bold text-[#06D6A0]' : 'text-[11px] font-bold text-[#EF476F]';
+
+        // Lista verifiche regolamentari clickabili
+        const valList = document.getElementById('validation-list');
+        valList.innerHTML = validation.issues.map((issue) => {
+          const isOk = issue.level === 'ok';
+          const focusId = issue.focusIds && issue.focusIds.length > 0 ? issue.focusIds[0] : '';
+          return `
+            <li data-focus-id="${focusId}" class="${focusId ? 'cursor-pointer active:scale-[0.99]' : ''} flex items-start gap-2 p-2 rounded-xl border ${isOk ? 'bg-[#06D6A0]/10 border-[#06D6A0]/30 text-emerald-200' : 'bg-[#EF476F]/15 border-[#EF476F]/40 text-rose-200'}">
+              <span class="font-extrabold shrink-0">${isOk ? '✓' : '⚠'}</span>
+              <span class="flex-1">${issue.text}</span>
+              ${focusId ? '<span class="text-[10px] underline opacity-80 shrink-0">Mostra</span>' : ''}
+            </li>
+          `;
+        }).join('');
+
+        // Lista interattiva della sequenza
+        const seqList = document.getElementById('sequence-list');
+        if (state.sequence.length === 0) {
+          seqList.innerHTML = `<div class="text-xs text-slate-400 bg-[#1E293B] rounded-xl p-3 text-center border border-slate-800">Attiva la modalità <strong>1→N</strong> e tocca gli attrezzi sul campo per costruire la sequenza.</div>`;
+        } else {
+          seqList.innerHTML = state.sequence.map((item, idx) => {
+            const obs = state.obstacles.find(o => o.id === item.id);
+            if (!obs) return '';
+            const spec = EQUIP_SPECS[obs.type];
+            const hasSideBtn = obs.type === 'gate' || obs.type === 'barrel';
+            const sideText = obs.type === 'gate'
+              ? (item.side === 1 ? 'Lato A' : 'Lato B')
+              : (item.side === 1 ? 'Destra' : 'Sinistra');
+
+            return `
+              <div class="flex items-center justify-between gap-1.5 bg-[#1E293B] border border-slate-700 rounded-xl px-2.5 py-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-mono font-extrabold text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                  <span class="text-xs font-bold text-slate-100 truncate">${spec.name}</span>
+                  ${hasSideBtn ? `
+                    <button type="button" data-seq-flip="${idx}" class="px-2 py-0.5 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 text-[11px] font-bold shrink-0">
+                      ⇄ ${sideText}
+                    </button>
+                  ` : ''}
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <button type="button" data-seq-up="${idx}" ${idx === 0 ? 'disabled' : ''} class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200 disabled:opacity-30 text-xs font-bold">↑</button>
+                  <button type="button" data-seq-down="${idx}" ${idx === state.sequence.length - 1 ? 'disabled' : ''} class="w-7 h-7 rounded-lg bg-slate-800 text-slate-200 disabled:opacity-30 text-xs font-bold">↓</button>
+                  <button type="button" data-seq-del="${idx}" class="w-7 h-7 rounded-lg bg-rose-500/20 text-rose-300 text-xs font-bold">✕</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      }
+
+      function saveToLocalStorage() {
+        try {
+          localStorage.setItem(STORAGE_KEY, cloneStateSnapshot());
+        } catch (err) {
+          // Ignora eventuale quota piena
+        }
+      }
+
+      function renderAll() {
+        state.sequence = normalizeSequence(state.sequence);
+        const validation = validateCourse();
+        render2DField();
+        render2DPathAndDistances(validation);
+        render2DObstacles(validation);
+        render2DSelection();
+        updateContextualBar();
+        updateValidationAndDrawer(validation);
+        if (threeState.ready && state.view === '3d') {
+          rebuild3DObjects();
+        }
+        saveToLocalStorage();
+      }
+
+      function syncControlsFromState() {
+        document.getElementById('select-category').value = state.category;
+        document.getElementById('select-class').value = state.csenClass;
+        document.getElementById('select-field-size').value = `${state.fieldW}x${state.fieldH}`;
+        const evName = state.eventName || '';
+        const evDate = state.eventDate || '';
+        const topName = document.getElementById('top-event-name');
+        const topDate = document.getElementById('top-event-date');
+        const modName = document.getElementById('modal-event-name');
+        const modDate = document.getElementById('modal-event-date');
+        if (topName && topName.value !== evName) topName.value = evName;
+        if (topDate && topDate.value !== evDate) topDate.value = evDate;
+        if (modName && modName.value !== evName) modName.value = evName;
+        if (modDate && modDate.value !== evDate) modDate.value = evDate;
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById('toast-msg');
+        el.textContent = msg;
+        el.classList.remove('opacity-0');
+        el.classList.add('opacity-100');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.remove('opacity-100');
+          el.classList.add('opacity-0');
+        }, 2300);
+      }
+
+      /* =====================================================================
+       * 10. ESPORTAZIONE PLANIMETRIA PNG: SOLO CAMPO GARA CON DATI EVENTO INTERNI
+       * ===================================================================== */
+      function formatItalianDate(isoDate) {
+        if (!isoDate || !isoDate.includes('-')) return isoDate || '';
+        const parts = isoDate.split('-');
+        if (parts.length !== 3) return isoDate;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      function exportPNG() {
+        const rule = CSEN_RULES[state.csenClass];
+        const distRange = rule.dist[state.category];
+
+        const ppm = 45;
+        const fieldPxW = state.fieldW * ppm;
+        const fieldPxH = state.fieldH * ppm;
+
+        // Il canvas corrisponde ESCLUSIVAMENTE alle dimensioni del rettangolo del campo gara
+        const canvas = document.createElement('canvas');
+        canvas.width = fieldPxW;
+        canvas.height = fieldPxH;
+
+        const ctx = canvas.getContext('2d');
+
+        // 1. Sfondo Prato del Campo Gara
+        ctx.fillStyle = '#1B4332';
+        ctx.fillRect(0, 0, fieldPxW, fieldPxH);
+
+        // 2. Griglia metrica 1m / 5m
+        for (let x = 1; x < state.fieldW; x++) {
+          ctx.strokeStyle = '#2D6A4F';
+          ctx.lineWidth = x % 5 === 0 ? 2 : 1;
+          ctx.beginPath();
+          ctx.moveTo(x * ppm, 0);
+          ctx.lineTo(x * ppm, fieldPxH);
+          ctx.stroke();
+        }
+        for (let y = 1; y < state.fieldH; y++) {
+          ctx.strokeStyle = '#2D6A4F';
+          ctx.lineWidth = y % 5 === 0 ? 2 : 1;
+          ctx.beginPath();
+          ctx.moveTo(0, y * ppm);
+          ctx.lineTo(fieldPxW, y * ppm);
+          ctx.stroke();
+        }
+
+        // Indicatori metrici interni lungo i bordi (ogni 5m)
+        ctx.fillStyle = 'rgba(203, 213, 225, 0.75)';
+        ctx.font = 'bold 12px JetBrains Mono, monospace';
+        ctx.textAlign = 'left';
+        for (let y = 5; y < state.fieldH; y += 5) {
+          ctx.fillText(`${y}m`, 6, y * ppm - 4);
+        }
+        ctx.textAlign = 'center';
+        for (let x = 5; x < state.fieldW; x += 5) {
+          ctx.fillText(`${x}m`, x * ppm, fieldPxH - 6);
+        }
+
+        // 3. Fascia sicurezza perimetrale 1.0m
+        ctx.save();
+        ctx.setLineDash([10, 8]);
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(ppm, ppm, (state.fieldW - 2) * ppm, (state.fieldH - 2) * ppm);
+        ctx.restore();
+
+        // Raggio max ZdC se presente
+        const zdcObs = state.obstacles.find(o => o.type === 'zdc');
+        if (zdcObs) {
+          ctx.save();
+          ctx.setLineDash([12, 9]);
+          ctx.strokeStyle = 'rgba(192, 132, 252, 0.35)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(zdcObs.x * ppm, zdcObs.y * ppm, rule.maxZdcRadius * ppm, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 4. Traiettoria del cane + Frecce direzionali + Quote distanze
+        const { waypoints, distances } = computeDogPathSegments();
+        if (waypoints.length >= 2) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(15, 23, 42, 0.55)';
+          ctx.lineWidth = 8;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          waypoints.forEach((p, idx) => {
+            if (idx === 0) ctx.moveTo(p.x * ppm, p.y * ppm);
+            else ctx.lineTo(p.x * ppm, p.y * ppm);
+          });
+          ctx.stroke();
+
+          ctx.strokeStyle = '#FFD166';
+          ctx.lineWidth = 4.5;
+          ctx.beginPath();
+          waypoints.forEach((p, idx) => {
+            if (idx === 0) ctx.moveTo(p.x * ppm, p.y * ppm);
+            else ctx.lineTo(p.x * ppm, p.y * ppm);
+          });
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (const d of distances) {
+          const angleRad = Math.atan2(d.toObs.y - d.fromObs.y, d.toObs.x - d.fromObs.x);
+          ctx.save();
+          ctx.translate(d.midX * ppm, d.midY * ppm);
+          ctx.rotate(angleRad);
+          ctx.fillStyle = '#FFD166';
+          ctx.strokeStyle = '#0F172A';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(10, 0);
+          ctx.lineTo(-8, -6);
+          ctx.lineTo(-4, 0);
+          ctx.lineTo(-8, 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          // Etichetta distanza
+          const isBad = d.meters < distRange.min - 0.01 || d.meters > distRange.max + 0.01;
+          const bx = d.midX * ppm;
+          const by = (d.midY - 0.42) * ppm;
+          ctx.save();
+          ctx.fillStyle = isBad ? '#EF476F' : '#06D6A0';
+          ctx.strokeStyle = '#0F172A';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.roundRect(bx - 24, by - 11, 48, 20, 6);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = isBad ? '#FFFFFF' : '#0F172A';
+          ctx.font = 'bold 12px JetBrains Mono, monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(`${d.meters.toFixed(1)}m`, bx, by - 1);
+          ctx.restore();
+        }
+
+        // 5. Attrezzi e Numeri Sequenza
+        const passMap = new Map();
+        state.sequence.forEach((item, idx) => {
+          if (!passMap.has(item.id)) passMap.set(item.id, []);
+          passMap.get(item.id).push(idx + 1);
+        });
+
+        for (const obs of state.obstacles) {
+          ctx.save();
+          ctx.translate(obs.x * ppm, obs.y * ppm);
+          ctx.rotate(degToRad(obs.angle || 0));
+
+          if (obs.type === 'zdc') {
+            ctx.fillStyle = 'rgba(192, 132, 252, 0.25)';
+            ctx.strokeStyle = '#C084FC';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, ppm, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#F3E8FF';
+            ctx.font = 'bold 15px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('ZdC', 0, 5);
+          } else if (obs.type === 'hoop') {
+            ctx.fillStyle = '#FBBF24';
+            ctx.strokeStyle = '#0F172A';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-0.45 * ppm, -4, 0.90 * ppm, 8);
+            ctx.strokeRect(-0.45 * ppm, -4, 0.90 * ppm, 8);
+          } else if (obs.type === 'gate') {
+            ctx.fillStyle = '#38BDF8';
+            ctx.strokeStyle = '#0F172A';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-0.60 * ppm, -4, 1.20 * ppm, 8);
+            ctx.strokeRect(-0.60 * ppm, -4, 1.20 * ppm, 8);
+          } else if (obs.type === 'barrel') {
+            ctx.fillStyle = '#F43F5E';
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 0.30 * ppm, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+          } else if (obs.type === 'tunnel') {
+            const len = (obs.length || 1.0) * ppm;
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.45)';
+            ctx.strokeStyle = '#34D399';
+            ctx.lineWidth = 3;
+            ctx.fillRect(-0.40 * ppm, -len / 2, 0.80 * ppm, len);
+            ctx.strokeRect(-0.40 * ppm, -len / 2, 0.80 * ppm, len);
+          }
+          ctx.restore();
+
+          const nums = passMap.get(obs.id);
+          if (nums && nums.length > 0) {
+            const label = nums.join(',');
+            const rad = Math.max(13, label.length * 5.5 + 7);
+            ctx.fillStyle = '#0F172A';
+            ctx.strokeStyle = '#FFD166';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc((obs.x + 0.45) * ppm, (obs.y - 0.45) * ppm, rad, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#FFD166';
+            ctx.font = 'bold 12px JetBrains Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, (obs.x + 0.45) * ppm, (obs.y - 0.45) * ppm + 1);
+          }
+        }
+
+        // 6. Riquadro Dati Evento, Categoria e Classe INTEGRATO ALL'INTERNO DEL CAMPO GARA
+        const padBox = 12;
+        const boxH = 54;
+        const boxW = fieldPxW - padBox * 2;
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(padBox, padBox, boxW, boxH, 10);
+        ctx.fill();
+        ctx.stroke();
+
+        const catLabel = state.category === 'small' ? 'Small (< 43 cm)' : 'Standard (≥ 43 cm)';
+        const eventTitle = state.eventName && state.eventName.trim() ? state.eventName.trim() : 'Percorso Hoopers CSEN 2026';
+        const dateStr = formatItalianDate(state.eventDate);
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FBBF24';
+        ctx.font = 'bold 17px Inter, sans-serif';
+        ctx.fillText(eventTitle, padBox + 14, padBox + 19, boxW - 28);
+
+        ctx.fillStyle = '#F8FAFC';
+        ctx.font = '600 13px Inter, sans-serif';
+        const subLine = [
+          dateStr ? `Data: ${dateStr}` : null,
+          `Categoria: ${catLabel}`,
+          `Classe: ${rule.label} (${state.fieldW}×${state.fieldH}m)`
+        ].filter(Boolean).join('   •   ');
+        ctx.fillText(subLine, padBox + 14, padBox + 39, boxW - 28);
+        ctx.restore();
+
+        // 7. Bordo perimetrale del campo gara
+        ctx.strokeStyle = '#94A3B8';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(2, 2, fieldPxW - 4, fieldPxH - 4);
+
+        const safeSlug = (state.eventName || state.csenClass)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-|-$/g, '') || 'campo';
+
+        const link = document.createElement('a');
+        link.download = `zenhoop-${safeSlug}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('PNG del campo gara esportato');
+      }
+
+      /* =====================================================================
+       * 11. EVENT LISTENERS UI & CONTROLLI
+       * ===================================================================== */
+      document.getElementById('btn-undo').addEventListener('click', undo);
+      document.getElementById('btn-redo').addEventListener('click', redo);
+
+      // Sincronizzazione Nome Evento & Data Evento
+      [document.getElementById('top-event-name'), document.getElementById('modal-event-name')].forEach(el => {
+        if (!el) return;
+        el.addEventListener('input', (e) => {
+          state.eventName = e.target.value;
+          syncControlsFromState();
+          saveToLocalStorage();
+        });
+      });
+
+      [document.getElementById('top-event-date'), document.getElementById('modal-event-date')].forEach(el => {
+        if (!el) return;
+        el.addEventListener('change', (e) => {
+          state.eventDate = e.target.value;
+          syncControlsFromState();
+          saveToLocalStorage();
+        });
+      });
+
+      // Modal Preset
+      const presetModal = document.getElementById('preset-modal');
+      document.getElementById('btn-open-presets').addEventListener('click', () => presetModal.classList.remove('hidden'));
+      document.getElementById('btn-close-presets').addEventListener('click', () => presetModal.classList.add('hidden'));
+      presetModal.addEventListener('click', (e) => {
+        if (e.target === presetModal) presetModal.classList.add('hidden');
+      });
+      document.querySelectorAll('.preset-choice-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.getAttribute('data-preset');
+          presetModal.classList.add('hidden');
+          loadPreset(key);
+        });
+      });
+
+      document.getElementById('select-category').addEventListener('change', (e) => {
+        pushHistory();
+        state.category = e.target.value;
+        renderAll();
+      });
+
+      document.getElementById('select-class').addEventListener('change', (e) => {
+        pushHistory();
+        state.csenClass = e.target.value;
+        renderAll();
+      });
+
+      document.getElementById('select-field-size').addEventListener('change', (e) => {
+        const [w, h] = e.target.value.split('x').map(Number);
+        if (w && h) {
+          pushHistory();
+          state.fieldW = w;
+          state.fieldH = h;
+          fitFieldToScreen();
+          if (threeState.ready) {
+            rebuild3DField();
+            set3DCameraPreset('iso');
+          }
+          renderAll();
+        }
+      });
+
+      // Toggle Vista 2D / 3D
+      const btnView2D = document.getElementById('btn-view-2d');
+      const btnView3D = document.getElementById('btn-view-3d');
+      const view2DContainer = document.getElementById('view-2d-container');
+      const view3DContainer = document.getElementById('view-3d-container');
+      const bottomToolbar = document.getElementById('bottom-toolbar');
+      const modeToggleGroup = document.getElementById('mode-toggle-group');
+
+      function setView(view) {
+        state.view = view;
+        if (view === '2d') {
+          btnView2D.className = 'px-2.5 rounded-md text-[11px] font-extrabold transition-colors bg-amber-400 text-slate-950 flex items-center justify-center';
+          btnView3D.className = 'px-2.5 rounded-md text-[11px] font-extrabold transition-colors text-slate-300 hover:text-white flex items-center justify-center';
+          view2DContainer.classList.remove('hidden');
+          view3DContainer.classList.add('hidden');
+          bottomToolbar.classList.remove('hidden');
+          modeToggleGroup.classList.remove('hidden');
+          renderAll();
+        } else {
+          btnView3D.className = 'px-2.5 rounded-md text-[11px] font-extrabold transition-colors bg-amber-400 text-slate-950 flex items-center justify-center';
+          btnView2D.className = 'px-2.5 rounded-md text-[11px] font-extrabold transition-colors text-slate-300 hover:text-white flex items-center justify-center';
+          view2DContainer.classList.add('hidden');
+          view3DContainer.classList.remove('hidden');
+          bottomToolbar.classList.add('hidden');
+          modeToggleGroup.classList.add('hidden');
+          updateContextualBar();
+
+          if (!threeState.ready) {
+            init3DScene();
+          }
+          if (threeState.ready) {
+            const container = document.getElementById('three-container');
+            threeState.camera.aspect = container.clientWidth / container.clientHeight;
+            threeState.camera.updateProjectionMatrix();
+            threeState.renderer.setSize(container.clientWidth, container.clientHeight);
+            rebuild3DField();
+            rebuild3DObjects();
+            set3DCameraPreset('iso');
+          }
+        }
+      }
+
+      btnView2D.addEventListener('click', () => setView('2d'));
+      btnView3D.addEventListener('click', () => setView('3d'));
+
+      // Toggle Modalità Sposta / 1→N
+      const btnModeMove = document.getElementById('btn-mode-move');
+      const btnModeSeq = document.getElementById('btn-mode-seq');
+      const hudHint = document.getElementById('hud-mode-hint');
+
+      function setMode(mode) {
+        state.mode = mode;
+        if (mode === 'move') {
+          btnModeMove.className = 'px-2 rounded-md text-[11px] font-bold transition-colors bg-sky-500 text-slate-950 flex items-center justify-center';
+          btnModeSeq.className = 'px-2 rounded-md text-[11px] font-bold transition-colors text-slate-300 hover:text-white flex items-center justify-center';
+          hudHint.textContent = 'Trascina • Pizzica per zoom';
+        } else {
+          btnModeSeq.className = 'px-2 rounded-md text-[11px] font-bold transition-colors bg-amber-400 text-slate-950 flex items-center justify-center';
+          btnModeMove.className = 'px-2 rounded-md text-[11px] font-bold transition-colors text-slate-300 hover:text-white flex items-center justify-center';
+          hudHint.textContent = 'Tocca attrezzi in ordine 1 → N';
+        }
+      }
+
+      btnModeMove.addEventListener('click', () => setMode('move'));
+      btnModeSeq.addEventListener('click', () => setMode('seq'));
+
+      document.getElementById('btn-zoom-in').addEventListener('click', () => zoomAtCenter(1.2));
+      document.getElementById('btn-zoom-out').addEventListener('click', () => zoomAtCenter(0.83));
+      document.getElementById('btn-zoom-fit').addEventListener('click', fitFieldToScreen);
+
+      // Aggiunta nuovo attrezzo
+      document.querySelectorAll('.add-equip-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const type = btn.getAttribute('data-add');
+          if (!type) return;
+
+          if (type === 'zdc' && state.obstacles.some(o => o.type === 'zdc')) {
+            showToast('Massimo 1 Zona di Conduzione (ZdC) per percorso');
+            return;
+          }
+
+          pushHistory();
+          let x = Math.round((state.fieldW / 2) * 4) / 4;
+          let y = Math.round((state.fieldH / 2) * 4) / 4;
+          while (state.obstacles.some(o => Math.hypot(o.x - x, o.y - y) < 0.8)) {
+            y = Math.min(state.fieldH - 2, y + 1.5);
+          }
+
+          const newObs = {
+            id: generateId(type),
+            type,
+            x,
+            y,
+            angle: 0
+          };
+          if (type === 'tunnel') {
+            newObs.length = 1.0; // Lunghezza default 1.0m
+          }
+
+          state.obstacles.push(newObs);
+          state.selectedId = newObs.id;
+          state.selectedStepIndex = null;
+          setMode('move');
+          renderAll();
+          showToast(`${EQUIP_SPECS[type].name} aggiunto`);
+        });
+      });
+
+      // Azioni barra contestuale
+      document.getElementById('btn-ctx-rot-ccw').addEventListener('click', () => {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs || obs.type === 'zdc') return;
+        pushHistory();
+        obs.angle = (((obs.angle || 0) - 15) % 360 + 360) % 360;
+        renderAll();
+      });
+
+      document.getElementById('btn-ctx-rot-cw').addEventListener('click', () => {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs || obs.type === 'zdc') return;
+        pushHistory();
+        obs.angle = (((obs.angle || 0) + 15) % 360 + 360) % 360;
+        renderAll();
+      });
+
+      document.getElementById('select-ctx-step').addEventListener('change', (e) => {
+        state.selectedStepIndex = Number(e.target.value);
+        updateContextualBar();
+      });
+
+      document.getElementById('btn-ctx-side').addEventListener('click', () => {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs || (obs.type !== 'gate' && obs.type !== 'barrel')) return;
+        const matchingIndices = state.sequence
+          .map((s, idx) => (s.id === obs.id ? idx : -1))
+          .filter(idx => idx !== -1);
+        if (matchingIndices.length === 0) return;
+
+        const targetIdx = matchingIndices.includes(state.selectedStepIndex)
+          ? state.selectedStepIndex
+          : matchingIndices[0];
+
+        pushHistory();
+        state.sequence[targetIdx].side = state.sequence[targetIdx].side === 1 ? -1 : 1;
+        renderAll();
+      });
+
+      document.getElementById('btn-ctx-length').addEventListener('click', () => {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs || obs.type !== 'tunnel') return;
+        pushHistory();
+        obs.length = (obs.length || 1.0) === 1.0 ? 3.0 : 1.0;
+        renderAll();
+      });
+
+      document.getElementById('btn-ctx-dup').addEventListener('click', () => {
+        const obs = state.obstacles.find(o => o.id === state.selectedId);
+        if (!obs) return;
+        if (obs.type === 'zdc') {
+          showToast('Non è possibile duplicare la ZdC');
+          return;
+        }
+        pushHistory();
+        const copy = JSON.parse(JSON.stringify(obs));
+        copy.id = generateId(obs.type);
+        copy.x = Math.min(state.fieldW - 1.5, obs.x + 1.5);
+        copy.y = Math.min(state.fieldH - 1.5, obs.y + 1.5);
+        state.obstacles.push(copy);
+        state.selectedId = copy.id;
+        state.selectedStepIndex = null;
+        renderAll();
+        showToast('Attrezzo duplicato');
+      });
+
+      document.getElementById('btn-ctx-del').addEventListener('click', () => {
+        if (!state.selectedId) return;
+        pushHistory();
+        const delId = state.selectedId;
+        state.obstacles = state.obstacles.filter(o => o.id !== delId);
+        state.sequence = state.sequence.filter(s => s.id !== delId);
+        state.selectedId = null;
+        state.selectedStepIndex = null;
+        renderAll();
+        showToast('Elemento rimosso');
+      });
+
+      // Controlli telecamera 3D
+      document.getElementById('btn-cam-iso').addEventListener('click', () => set3DCameraPreset('iso'));
+      document.getElementById('btn-cam-top').addEventListener('click', () => set3DCameraPreset('top'));
+      document.getElementById('btn-cam-handler').addEventListener('click', () => set3DCameraPreset('handler'));
+      document.getElementById('btn-cam-dog').addEventListener('click', () => set3DCameraPreset('dog'));
+
+      // Controlli animazione 3D (Play/Pausa, Riavvia, Velocità)
+      document.getElementById('btn-anim-play').addEventListener('click', () => {
+        if (!threeState.sim.curve || threeState.sim.curveLength <= 0.2) {
+          showToast('Crea prima una sequenza 1→N per avviare la corsa');
+          return;
+        }
+        if (!threeState.sim.playing && threeState.sim.progress >= 0.99) {
+          threeState.sim.progress = 0;
+        }
+        threeState.sim.playing = !threeState.sim.playing;
+        syncAnimButtonUI();
+      });
+
+      document.getElementById('btn-anim-restart').addEventListener('click', () => {
+        threeState.sim.progress = 0;
+        threeState.sim.playing = Boolean(threeState.sim.curve && threeState.sim.curveLength > 0.2);
+        syncAnimButtonUI();
+        update3DActors(0);
+      });
+
+      const animSpeedSteps = [0.75, 1.0, 1.5];
+      document.getElementById('btn-anim-speed').addEventListener('click', (e) => {
+        const curIdx = animSpeedSteps.indexOf(threeState.sim.speed);
+        const nextSpeed = animSpeedSteps[(curIdx + 1) % animSpeedSteps.length];
+        threeState.sim.speed = nextSpeed;
+        e.currentTarget.textContent = `${nextSpeed.toFixed(nextSpeed === 0.75 ? 2 : 1)}x`;
+      });
+
+      // Bottom Drawer Toggle & Azioni
+      const drawerBody = document.getElementById('drawer-body');
+      const drawerChevron = document.getElementById('drawer-chevron');
+      const drawerChevronLabel = document.getElementById('drawer-chevron-label');
+
+      function toggleDrawer(forceOpen) {
+        const isHidden = drawerBody.classList.contains('hidden');
+        const open = typeof forceOpen === 'boolean' ? forceOpen : isHidden;
+        drawerBody.classList.toggle('hidden', !open);
+        drawerChevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+        drawerChevronLabel.textContent = open ? 'Chiudi' : 'Espandi';
+      }
+
+      document.getElementById('btn-toggle-drawer').addEventListener('click', () => toggleDrawer());
+      document.getElementById('btn-status-pill').addEventListener('click', () => toggleDrawer(true));
+
+      document.getElementById('validation-list').addEventListener('click', (e) => {
+        const li = e.target.closest('li[data-focus-id]');
+        if (!li) return;
+        const focusId = li.getAttribute('data-focus-id');
+        if (!focusId) return;
+        const obs = state.obstacles.find(o => o.id === focusId);
+        if (obs) {
+          state.selectedId = obs.id;
+          if (state.view !== '2d') setView('2d');
+          else renderAll();
+          showToast(`Selezionato: ${EQUIP_SPECS[obs.type].name}`);
+        }
+      });
+
+      document.getElementById('btn-clear-seq').addEventListener('click', () => {
+        if (state.sequence.length === 0) return;
+        pushHistory();
+        state.sequence = [];
+        state.selectedStepIndex = null;
+        renderAll();
+        showToast('Sequenza azzerata');
+      });
+
+      document.getElementById('sequence-list').addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        if (btn.hasAttribute('data-seq-flip')) {
+          const idx = Number(btn.getAttribute('data-seq-flip'));
+          if (state.sequence[idx]) {
+            pushHistory();
+            state.sequence[idx].side = state.sequence[idx].side === 1 ? -1 : 1;
+            renderAll();
+          }
+        } else if (btn.hasAttribute('data-seq-up')) {
+          const idx = Number(btn.getAttribute('data-seq-up'));
+          if (idx > 0) {
+            pushHistory();
+            const tmp = state.sequence[idx - 1];
+            state.sequence[idx - 1] = state.sequence[idx];
+            state.sequence[idx] = tmp;
+            renderAll();
+          }
+        } else if (btn.hasAttribute('data-seq-down')) {
+          const idx = Number(btn.getAttribute('data-seq-down'));
+          if (idx < state.sequence.length - 1) {
+            pushHistory();
+            const tmp = state.sequence[idx + 1];
+            state.sequence[idx + 1] = state.sequence[idx];
+            state.sequence[idx] = tmp;
+            renderAll();
+          }
+        } else if (btn.hasAttribute('data-seq-del')) {
+          const idx = Number(btn.getAttribute('data-seq-del'));
+          pushHistory();
+          state.sequence.splice(idx, 1);
+          renderAll();
+        }
+      });
+
+      // Modal JSON & Svuota Campo
+      const ioModal = document.getElementById('io-modal');
+      document.getElementById('btn-io-menu').addEventListener('click', () => ioModal.classList.remove('hidden'));
+      document.getElementById('btn-close-io').addEventListener('click', () => ioModal.classList.add('hidden'));
+      ioModal.addEventListener('click', (e) => {
+        if (e.target === ioModal) ioModal.classList.add('hidden');
+      });
+
+      document.getElementById('btn-download-json').addEventListener('click', () => {
+        const data = cloneStateSnapshot();
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `zenhoop-csen-2026-${state.csenClass}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        ioModal.classList.add('hidden');
+        showToast('File ZenHoop JSON esportato');
+      });
+
+      document.getElementById('input-load-json').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(String(reader.result));
+            if (!Array.isArray(parsed.obstacles)) throw new Error('Formato non valido');
+            pushHistory();
+            applySnapshot(parsed);
+            fitFieldToScreen();
+            if (threeState.ready) {
+              rebuild3DField();
+              rebuild3DObjects();
+              set3DCameraPreset('iso');
+            }
+            ioModal.classList.add('hidden');
+            showToast('Percorso ZenHoop JSON caricato');
+          } catch (err) {
+            showToast('Errore nel caricamento del file JSON');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+
+      document.getElementById('btn-clear-field').addEventListener('click', () => {
+        pushHistory();
+        state.obstacles = [];
+        state.sequence = [];
+        state.selectedId = null;
+        state.selectedStepIndex = null;
+        ioModal.classList.add('hidden');
+        renderAll();
+        showToast('Campo svuotato');
+      });
+
+      document.getElementById('btn-export-png').addEventListener('click', exportPNG);
+
+      window.addEventListener('resize', () => {
+        if (state.view === '2d') {
+          fitFieldToScreen();
+        } else if (threeState.ready) {
+          const container = document.getElementById('three-container');
+          if (container.clientWidth && container.clientHeight) {
+            threeState.camera.aspect = container.clientWidth / container.clientHeight;
+            threeState.camera.updateProjectionMatrix();
+            threeState.renderer.setSize(container.clientWidth, container.clientHeight);
+          }
+        }
+      });
+
+      /* =====================================================================
+       * 12. INIZIALIZZAZIONE
+       * ===================================================================== */
+      function initApp() {
+        let restored = false;
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed && Array.isArray(parsed.obstacles) && parsed.obstacles.length > 0) {
+              applySnapshot(parsed);
+              restored = true;
+            }
+          }
+        } catch (err) {
+          restored = false;
+        }
+
+        if (!restored) {
+          const def = PRESETS.avviamento;
+          state.category = def.category;
+          state.csenClass = def.csenClass;
+          state.fieldW = def.fieldW;
+          state.fieldH = def.fieldH;
+          state.obstacles = JSON.parse(JSON.stringify(def.obstacles));
+          state.sequence = JSON.parse(JSON.stringify(def.sequence));
+          syncControlsFromState();
+        }
+
+        updateUndoRedoButtons();
+        fitFieldToScreen();
+        renderAll();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>

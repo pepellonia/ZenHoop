@@ -1345,25 +1345,6 @@
       `;
     }
 
-    // Overall dimension callouts (Width & Length)
-    out += `
-      <g pointer-events="none">
-        <line x1="0" y1="-1.32" x2="${W}" y2="-1.32" stroke="#38BDF8" stroke-width="0.07"/>
-        <polygon points="0,-1.32 0.35,-1.48 0.35,-1.16" fill="#38BDF8"/>
-        <polygon points="${W},-1.32 ${W - 0.35},-1.48 ${W - 0.35},-1.16" fill="#38BDF8"/>
-        <rect x="${W/2 - 1.5}" y="-1.65" width="3.0" height="0.64" rx="0.2" fill="#0F172A" stroke="#38BDF8" stroke-width="0.05"/>
-        <text x="${W/2}" y="-1.20" text-anchor="middle" fill="#38BDF8" font-size="0.46" font-weight="800" font-family="sans-serif">LARGHEZZA ${W}.0 m</text>
-
-        <line x1="-1.55" y1="0" x2="-1.55" y2="${H}" stroke="#38BDF8" stroke-width="0.07"/>
-        <polygon points="-1.55,0 -1.71,0.35 -1.39,0.35" fill="#38BDF8"/>
-        <polygon points="-1.55,${H} -1.71,${H - 0.35} -1.39,${H - 0.35}" fill="#38BDF8"/>
-        <g transform="translate(-1.55, ${H/2}) rotate(-90)">
-          <rect x="-1.65" y="-0.32" width="3.3" height="0.64" rx="0.2" fill="#0F172A" stroke="#38BDF8" stroke-width="0.05"/>
-          <text x="0" y="0.14" text-anchor="middle" fill="#38BDF8" font-size="0.46" font-weight="800" font-family="sans-serif">LUNGHEZZA ${H}.0 m</text>
-        </g>
-      </g>
-    `;
-
     // ZdC max radius ring
     const zdc = state.items.find(it => it.type === 'zdc');
     if (zdc && val.rules) {
